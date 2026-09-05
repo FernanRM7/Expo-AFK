@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "week": 1,
+  "commitSha": "1bde86a792a44eb6a434f7f927dc9161aa063ab3",
+  "generatedAt": "2026-09-05T00:00:00Z",
+  "checks": [
+    {
+      "id": "baseline-backend-available",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:smoke",
+      "evidence": "En la línea base, el smoke test pasó y la interfaz mostró 'Backend: available'. Captura: reports/week-01/evidence/before-pass.png."
+    },
+    {
+      "id": "controlled-backend-status-regression",
+      "status": "fail",
+      "scenarioType": "failure",
+      "command": "npm run test:smoke",
+      "evidence": "En el commit 092404b4c1dea428402b5afb8b79b2865eb44dcf se cambió únicamente la transición de éxito de App.tsx para mostrar 'offline'. El test falló porque esperaba 'available' y recibió 'Backend: offline'. Captura: reports/week-01/evidence/controlled-failure.png."
+    },
+    {
+      "id": "backend-status-regression-corrected",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:smoke",
+      "evidence": "Después de restaurar la transición correcta en App.tsx, el smoke test pasó (1 suite, 1 test). La interfaz mostró 'Backend: available'. Captura: reports/week-01/evidence/after-fix.png."
+    }
+  ]
+}
