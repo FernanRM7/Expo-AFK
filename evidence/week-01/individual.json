@@ -37,14 +37,32 @@
     },
     {
       "studentId": "3523110409",
-      "commitShas": ["TODO_REPLACE_WITH_MEMBER_2_FULL_40_CHAR_COMMIT_SHA"],
-      "files": ["TODO_REPLACE_WITH_MEMBER_2_TECHNICAL_FILE"],
-      "tests": ["TODO_REPLACE_WITH_MEMBER_2_TEST_OR_VERIFICATION"],
-      "reviews": ["TODO_REPLACE_WITH_MEMBER_2_REVIEW"],
-      "prediction": "TODO_MEMBER_2_DESCRIBE_EXPECTED_RESULT",
-      "command": "TODO_MEMBER_2_EXACT_COMMAND",
-      "observedResult": "TODO_MEMBER_2_OBSERVED_RESULT",
-      "explanation": "TODO_MEMBER_2_EXPLAIN_CONTRIBUTION_AND_REASONING"
+      "commitShas": [
+        "2f8103580dfe662c20b042cc18010da3d42e7516",
+        "f4a403c2cf53d1a3450cedb4ac9c62f644b0cefa",
+        "0844224235e2f6cc73812b4923034f0bbaef3ff4",
+        "f4361881652422e20708d896f4667230a39f85f8"
+      ],
+      "files": [
+        "docs/problem-definition.md",
+        "App.tsx",
+        "reports/week-01/baseline.json",
+        "reports/week-01/evidence/integrante2-before-real.png",
+        "reports/week-01/evidence/integrante2-failure-real.png",
+        "reports/week-01/evidence/integrante2-after-real.png"
+      ],
+      "tests": [
+        "npm run test:smoke (falla con 'Backend: checking')",
+        "npm run test:smoke (pasa tras restaurar 'available')"
+      ],
+      "reviews": [
+        "Revisión de la falla controlada del integrante 1 (available→offline) en baseline.json",
+        "Revisión de la diferencia entre síntoma (checking/offline) y causa (transición en App.tsx:13)"
+      ],
+      "prediction": "Al cambiar setStatus('available') por setStatus('checking') en App.tsx:13, esperaba que el smoke test fallara mostrando 'Backend: checking' en lugar de 'available', y que al restaurar 'available' el test volviera a pasar.",
+      "command": "npm run test:smoke",
+      "observedResult": "Con App.tsx:13 en 'checking' el test falló (recibió 'Backend: checking'). Tras restaurar 'available' el test pasó (1 suite, 1 test).",
+      "explanation": "Introduje una falla controlada en la transición de éxito de getBackendHealth (App.tsx:13), documenté la regresión en baseline.json con 3 checks dedicados, capturé 3 evidencias reales (antes/fallo/después) y corregí la falla restaurando el estado correcto. El proyecto quedó funcional."
     },
     {
       "studentId": "3523110016",
