@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "week": 1,
+  "commitSha": "1bde86a792a44eb6a434f7f927dc9161aa063ab3",
+  "decision": "Priorizar la mitigación del Riesgo 1 (falla de disponibilidad del backend) implementando modo offline-first con cola local y sincronización automática, en lugar de depender solo de reintentos o cache simple.",
+  "alternatives": [
+    {
+      "id": "alt-1-reintentos-exponenciales",
+      "description": "Solo reintentos con backoff exponencial al fallar llamadas al backend, sin persistencia local de operaciones pendientes."
+    },
+    {
+      "id": "alt-2-cache-simple",
+      "description": "Cachear solo respuestas GET (listar incidencias) en AsyncStorage, pero no permitir crear/editar offline."
+    },
+    {
+      "id": "alt-3-offline-first-cola-local",
+      "description": "Persistir todas las operaciones (crear, actualizar, cerrar incidencias) en cola local SQLite/AsyncStorage, mostrar estado 'pendiente' en UI, y sincronizar automáticamente al recuperar conexión con resolución de conflictos last-write-wins."
+    }
+  ],
+  "tradeoff": "La alternativa 3 (offline-first) aumenta complejidad de sincronización y requiere manejo de conflictos, pero garantiza que el flujo CampusOps (reportar→asignar→atender→cerrar) nunca se bloquee por fallas de red. Las alternativas 1 y 2 son más simples pero dejan inoperativo el registro de nuevas incidencias durante caídas del backend.",
+  "requirementIds": ["AC-02", "AC-04"],
+  "verification": [
+    {
+      "command": "npm run test:smoke",
+      "result": "PASS - 1 suite, 1 test passed. Backend status shows 'available' después de corrección de fallas controladas.",
+      "evidence": "reports/week-01/baseline.json (checks baseline-backend-available, integrante2-success-transition-corrected)"
+    },
+    {
+      "command": "git log --oneline -5",
+      "result": "f4a403c test: falla controlada integrante 2\n30c24c2 docs: record reproducible baseline evidence\n1bde86a fix: restore backend availability status\n092404b test: reproduce backend status regression\n1785cf6 docs: define CampusOps problem and scope",
+      "evidence": "Historial de commits en act3/reproducible-baseline muestra fallas controladas, correcciones y evidencia documentada."
+    }
+  ]
+}
