@@ -66,14 +66,30 @@
     },
     {
       "studentId": "3523110016",
-      "commitShas": ["TODO_REPLACE_WITH_MEMBER_3_FULL_40_CHAR_COMMIT_SHA"],
-      "files": ["TODO_REPLACE_WITH_MEMBER_3_TECHNICAL_FILE"],
-      "tests": ["TODO_REPLACE_WITH_MEMBER_3_TEST_OR_VERIFICATION"],
-      "reviews": ["TODO_REPLACE_WITH_MEMBER_3_REVIEW"],
-      "prediction": "TODO_MEMBER_3_DESCRIBE_EXPECTED_RESULT",
-      "command": "TODO_MEMBER_3_EXACT_COMMAND",
-      "observedResult": "TODO_MEMBER_3_OBSERVED_RESULT",
-      "explanation": "TODO_MEMBER_3_EXPLAIN_CONTRIBUTION_AND_REASONING"
+      "commitShas": [
+        "95bf3d150eb116bc9c0eea3f06870e91f83ad5d7"
+      ],
+      "files": [
+        "App.tsx",
+        "reports/week-01/baseline.json",
+        "reports/week-01/evidence/jaime-before-pass.png",
+        "reports/week-01/evidence/jaime-title-failure.png",
+        "reports/week-01/evidence/jaime-after-fix.png",
+        "docs/risk-register.md"
+      ],
+      "tests": [
+        "npm run test:smoke (estado inicial) — pasó, 1 suite, 1 test.",
+        "npm run test:smoke (con falla en título) — falló: Unable to find an element with text: CampusOps.",
+        "npm run test:smoke (corregido) — pasó, 1 suite, 1 test."
+      ],
+      "reviews": [
+        "Revisión del smoke test (course-tests/smoke.test.tsx) y de courseBackend.ts para identificar una aserción no cubierta por las fallas de mis compañeros.",
+        "Análisis y priorización de tres riesgos generales del proyecto en docs/risk-register.md."
+      ],
+      "prediction": "Al cambiar el texto del título de 'CampusOps' a 'CampusOps App' en App.tsx, esperaba que el smoke test fallara porque la aserción getByText('CampusOps') busca coincidencia exacta.",
+      "command": "npm run test:smoke",
+      "observedResult": "La ejecución con la falla activa mostró: 'Unable to find an element with text: CampusOps'. Después de restaurar el texto original, el test volvió a pasar (1 suite, 1 test).",
+      "explanation": "Se documentaron y priorizaron tres riesgos generales del proyecto CampusOps en docs/risk-register.md. Además, se reprodujo una falla controlada distinta a la de mis compañeros , se distinguió el síntoma (texto no encontrado) de la causa (texto alterado), se corrigió y se registró la evidencia en reports/week-01/baseline.json junto con capturas de terminal."
     }
   ]
 }
