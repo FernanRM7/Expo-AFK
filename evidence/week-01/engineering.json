@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 1,
-  "commitSha": "1bde86a792a44eb6a434f7f927dc9161aa063ab3",
+  "commitSha": "0844224235e2f6cc73812b4923034f0bbaef3ff4",
   "decision": "Priorizar la mitigación del Riesgo 1 (falla de disponibilidad del backend) implementando modo offline-first con cola local y sincronización automática, en lugar de depender solo de reintentos o cache simple.",
   "alternatives": [
     {

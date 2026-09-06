@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 1,
-  "commitSha": "1bde86a792a44eb6a434f7f927dc9161aa063ab3",
+  "commitSha": "0844224235e2f6cc73812b4923034f0bbaef3ff4",
   "generatedAt": "2026-09-05T00:00:00Z",
   "checks": [
     {
@@ -26,18 +26,25 @@
       "evidence": "Después de restaurar la transición correcta en App.tsx, el smoke test pasó (1 suite, 1 test). La interfaz mostró 'Backend: available'. Captura: reports/week-01/evidence/after-fix.png."
     },
     {
+      "id": "integrante2-before-failure",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:smoke",
+      "evidence": "Estado funcional antes de la falla del integrante 2. La interfaz mostraba 'Backend: available'. Captura: reports/week-01/evidence/integrante2-before-real.png."
+    },
+    {
       "id": "integrante2-success-transition-checking",
       "status": "fail",
       "scenarioType": "failure",
       "command": "npm run test:smoke",
-      "evidence": "En App.tsx línea 13 se cambió la transición de éxito de 'available' a 'checking'. El test falló porque esperaba 'available' y recibió 'Backend: checking'. Síntoma: la interfaz nunca muestra 'available'. Causa: setStatus('checking') en el handler de éxito en lugar de 'available'. Captura: reports/week-01/evidence/integrante2-failure.png."
+      "evidence": "En App.tsx línea 13 se cambió la transición de éxito de 'available' a 'checking'. El test falló porque esperaba 'available' y recibió 'Backend: checking'. Síntoma: la interfaz nunca muestra 'available'. Causa: setStatus('checking') en el handler de éxito en lugar de 'available'. Captura: reports/week-01/evidence/integrante2-failure-real.png."
     },
     {
       "id": "integrante2-success-transition-corrected",
       "status": "pass",
       "scenarioType": "boundary",
       "command": "npm run test:smoke",
-      "evidence": "Después de restaurar setStatus('available') en App.tsx línea 13, el smoke test pasó. La interfaz mostró 'Backend: available'. Captura: reports/week-01/evidence/integrante2-after-fix.png."
+      "evidence": "Después de restaurar setStatus('available') en App.tsx línea 13, el smoke test pasó. La interfaz mostró 'Backend: available'. Captura: reports/week-01/evidence/integrante2-after-real.png."
     }
   ]
 }
