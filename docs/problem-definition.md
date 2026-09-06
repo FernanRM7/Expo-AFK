@@ -1,65 +1,64 @@
-# Definición del problema — CampusOps
+# Definición del Problema — CampusOps
 
-## Problema que se quiere resolver
+Este documento complementa la especificación en `CAMPUSOPS.md` detallando los actores, sus responsabilidades y el recorrido central de una incidencia.
 
-En el campus universitario, las fallas de mantenimiento —como problemas eléctricos, daños en laboratorios, fugas de agua, conectividad o equipos descompuestos— pueden tardar en atenderse porque los reportes no siempre llegan al responsable adecuado, no tienen una prioridad clara y su avance no es visible para todas las personas involucradas.
+## Actores y responsabilidades
 
-CampusOps propone centralizar el registro y seguimiento de incidencias para reducir ese retraso: cada reporte debe poder asignarse, atenderse y cerrarse con un estado, una persona responsable y evidencia del trabajo realizado.
+### Reportante
+- Crear una incidencia seleccionando categoría, redactando descripción, adjuntando fotografías e indicando ubicación.
+- Consultar el listado y el detalle de sus propios reportes.
+- Agregar información posterior (notas, fotos) a una incidencia propia mientras esté en estado `open` o `assigned`.
+- Recibir notificación de cambios de estado relevantes (asignación, resolución, cierre).
 
-El problema principal es el **mantenimiento tardío** causado por la falta de un flujo trazable de atención. La aplicación no reemplaza el criterio del personal responsable; proporciona información organizada para que pueda actuar y dejar constancia de cada etapa.
+### Técnico
+- Consultar las incidencias que tiene asignadas (estado `assigned` o `in_progress`).
+- Iniciar la atención de una incidencia asignada, cambiando su estado a `in_progress`.
+- Registrar diagnóstico, notas de trabajo y evidencias fotográficas durante la atención.
+- Marcar la incidencia como `resolved` al completar la intervención, adjuntando evidencia de resolución.
+- Trabajar sin conexión: consultar incidencias locales, cambiar estado y agregar notas/evidencias; los cambios se encolan para sincronizar al recuperar conectividad.
+- No modificar una incidencia que haya sido reasignada a otra persona.
 
-## Alcance del proyecto
+### Coordinador
+- Consultar el conjunto completo de incidencias con filtros por estado, categoría, prioridad y técnico.
+- Priorizar incidencias y asignar o reasignar técnicos (cambio a `assigned`).
+- Revisar historial, evidencias y diagnóstico registrado por el técnico.
+- Cerrar una incidencia resuelta (`resolved` → `closed`) validando la resolución.
+- Reabrir un caso `resolved` o `closed` devolviéndolo a `assigned` cuando exista técnico asignado.
+- Cada cambio de estado conserva historial y trazabilidad.
 
-### Incluye
+## Recorrido de una incidencia
 
-- Registro de incidencias con categoría, descripción y ubicación.
-- Consulta de incidencias y de su estado actual.
-- Priorización y asignación de incidencias a personal técnico.
-- Registro del diagnóstico, notas y evidencias de la atención.
-- Seguimiento del flujo de una incidencia mediante estados:
-  `open` → `assigned` → `in_progress` → `resolved` → `closed`.
-- Historial de cambios para conservar la trazabilidad.
-- Funciones diferenciadas para reportante, técnico y coordinador.
-- Manejo progresivo de información local, trabajo sin conexión, sincronización y conflictos según los hitos posteriores del proyecto.
+```mermaid
+flowchart LR
+    A[Reportar] --> B[Asignar]
+    B --> C[Atender]
+    C --> D[Cerrar]
+```
 
-### Fuera de alcance
+1. **Reportar** — El reportante crea la incidencia. Estado: `open`.
+2. **Asignar** — El coordinador asigna un técnico. Estado: `assigned`.
+3. **Atender** — El técnico inicia el trabajo, registra diagnóstico/evidencias y marca resuelto. Estados: `in_progress` → `resolved`.
+4. **Cerrar** — El coordinador valida y cierra la incidencia. Estado: `closed`.
+   - Opcional: el coordinador puede **reabrir** (`closed`/`resolved` → `assigned`) si procede.
 
-- Atención de emergencias o coordinación institucional real.
-- Uso de datos personales, credenciales, ubicaciones sensibles o fotografías reales.
-- Integración con sistemas institucionales reales.
-- Pagos, chat en tiempo real, inteligencia artificial o reconocimiento de imágenes.
-- Panel web administrativo completo.
-- Publicación obligatoria en tiendas.
+## Relación con los estados (CAMPUSOPS.md)
 
-El proyecto utiliza un campus ficticio, cuentas sintéticas, ubicaciones de prueba y datos preparados para el ejercicio.
+| Paso del recorrido | Estado en CAMPUSOPS.md | Responsable | Acción |
+|---|---|---|---|
+| Reportar | `open` | Reportante | Crear incidencia |
+| Asignar | `assigned` | Coordinador | Asignar técnico |
+| Atender (inicio) | `in_progress` | Técnico | Iniciar atención |
+| Atender (fin) | `resolved` | Técnico | Marcar resuelto con evidencia |
+| Cerrar | `closed` | Coordinador | Validar y cerrar |
+| Reabrir (opcional) | `assigned` | Coordinador | Reasignar técnico |
 
-## Responsabilidades por perfil
+La **resolución del técnico** (`resolved`) y el **cierre del coordinador** (`closed`) son operaciones distintas. El flujo garantiza trazabilidad: cada transición queda registrada en el historial de la incidencia.
 
-| Perfil | Responsabilidades principales |
-|---|---|
-| **Reportante** | Crear una incidencia, elegir su categoría, describir el problema, indicar la ubicación, adjuntar evidencia cuando corresponda, consultar sus reportes y agregar información posterior. |
-| **Técnico** | Consultar incidencias asignadas, iniciar la atención, registrar diagnóstico, notas y evidencias, y marcar la incidencia como resuelta. |
-| **Coordinador** | Consultar las incidencias, priorizarlas, asignarlas o reasignarlas, revisar el historial y las evidencias, cerrar una resolución o reabrir un caso cuando sea necesario. |
+## Coherencia con CAMPUSOPS.md
 
-Las acciones disponibles deben depender del perfil y de las reglas de autorización del servicio. Ocultar una opción en la interfaz no sustituye la comprobación de permisos.
-
-## Flujo principal de una incidencia
-
-El recorrido documentado es:
-
-1. **Reportar:** el reportante registra la falla con información suficiente para identificarla.
-2. **Asignar:** el coordinador revisa y prioriza el reporte, y lo asigna a un técnico.
-3. **Atender:** el técnico inicia el trabajo, registra el diagnóstico y agrega notas o evidencias.
-4. **Cerrar:** el técnico marca la atención como resuelta y el coordinador revisa y cierra la incidencia.
-
-Este flujo se representa con los estados `open`, `assigned`, `in_progress`, `resolved` y `closed`. En Semana 1 sólo se documenta el flujo; no se implementa todo el recorrido en la aplicación.
-
-## Criterios verificables de aceptación
-
-- El documento identifica el mantenimiento tardío como problema central y explica cómo la falta de prioridad, asignación y seguimiento contribuye a él.
-- El documento distingue claramente qué incluye y qué excluye CampusOps.
-- Cada uno de los tres perfiles tiene responsabilidades específicas y no intercambiables.
-- El flujo `reportar → asignar → atender → cerrar` identifica el actor responsable y el estado asociado a cada etapa.
-- Los estados documentados coinciden con `open → assigned → in_progress → resolved → closed`.
-- Se puede revisar el documento y comprobar que Semana 1 entrega documentación, no la implementación completa del flujo.
-- El alcance y los criterios se mantienen dentro del caso ficticio de CampusOps y no requieren datos reales para ser evaluados.
+- Los perfiles (Reportante, Técnico, Coordinador) y sus funciones coinciden con la tabla de **Perfiles** en `CAMPUSOPS.md`.
+- El flujo de estados `open → assigned → in_progress → resolved → closed` es idéntico al definido en **Flujo de estados**.
+- La reapertura por coordinación hacia `assigned` está contemplada en ambos documentos.
+- La distinción entre resolución técnica y cierre coordinado se respeta en el recorrido y en la tabla de estados.
+- El trabajo sin conexión del técnico y la cola de sincronización con detección de conflictos (caso de reasignación concurrente) son consistentes con la sección **Sin conexión, conflicto e idempotencia**.
+- La idempotencia de reintentos y claves de operación estable se refleja en que «repetir la misma operación no debe duplicar eventos, evidencias ni notificaciones».
