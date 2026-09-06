@@ -1,21 +1,12 @@
 {
   "schemaVersion": 1,
   "week": 1,
-  "commitSha": "0d167e6de95e90ec78eef41448a66c698e6ab828",
+  "commitSha": "eedb19821ddd94c29d44703f1dd9fd9dfaf4e9a8",
   "decision": "Priorizar la mitigación del Riesgo 1 (falla de disponibilidad del backend) implementando modo offline-first con cola local y sincronización automática, en lugar de depender solo de reintentos o cache simple.",
   "alternatives": [
-    {
-      "id": "alt-1-reintentos-exponenciales",
-      "description": "Solo reintentos con backoff exponencial al fallar llamadas al backend, sin persistencia local de operaciones pendientes."
-    },
-    {
-      "id": "alt-2-cache-simple",
-      "description": "Cachear solo respuestas GET (listar incidencias) en AsyncStorage, pero no permitir crear/editar offline."
-    },
-    {
-      "id": "alt-3-offline-first-cola-local",
-      "description": "Persistir todas las operaciones (crear, actualizar, cerrar incidencias) en cola local SQLite/AsyncStorage, mostrar estado 'pendiente' en UI, y sincronizar automáticamente al recuperar conexión con resolución de conflictos last-write-wins."
-    }
+    "Solo reintentos con backoff exponencial al fallar llamadas al backend, sin persistencia local de operaciones pendientes.",
+    "Cachear solo respuestas GET (listar incidencias) en AsyncStorage, pero no permitir crear/editar offline.",
+    "Persistir todas las operaciones (crear, actualizar, cerrar incidencias) en cola local SQLite/AsyncStorage, mostrar estado 'pendiente' en UI, y sincronizar automáticamente al recuperar conexión con resolución de conflictos last-write-wins."
   ],
   "tradeoff": "La alternativa 3 (offline-first) aumenta complejidad de sincronización y requiere manejo de conflictos, pero garantiza que el flujo CampusOps (reportar→asignar→atender→cerrar) nunca se bloquee por fallas de red. Las alternativas 1 y 2 son más simples pero dejan inoperativo el registro de nuevas incidencias durante caídas del backend.",
   "requirementIds": [
