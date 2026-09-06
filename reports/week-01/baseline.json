@@ -45,6 +45,13 @@
       "scenarioType": "boundary",
       "command": "npm run test:smoke",
       "evidence": "Después de restaurar setStatus('available') en App.tsx línea 13, el smoke test pasó. La interfaz mostró 'Backend: available'. Captura: reports/week-01/evidence/integrante2-after-real.png."
+    },
+    {
+      "id": "jaime-title-text-regression",
+      "status": "fail",
+      "scenarioType": "failure",
+      "command": "npm run test:smoke",
+      "evidence": "Estado funcional antes de la falla: el smoke test pasaba y encontraba el texto exacto 'CampusOps' en pantalla. En App.tsx se cambió el texto del título de 'CampusOps' a 'CampusOps App'. El test falló porque buscaba coincidencia exacta con getByText('CampusOps') y no la encontró  Síntoma: el test reporta que no encuentra el texto 'CampusOps'. Causa: el texto del título fue alterado a 'CampusOps App', rompiendo la coincidencia exacta que usa la prueba. Después de restaurar el texto original 'CampusOps' en App.tsx, el smoke test volvió a pasar (1 suite, 1 test)."
     }
   ]
 }
