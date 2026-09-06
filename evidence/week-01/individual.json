@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "week": 1,
+  "teamId": "9B-E11",
+  "members": [
+    {
+      "studentId": "3523110657",
+      "commitShas": [
+        "1785cf6679af7fe56d8ed5208c91499fc0eb162f",
+        "092404b4c1dea428402b5afb8b79b2865eb44dcf",
+        "1bde86a792a44eb6a434f7f927dc9161aa063ab3",
+        "30c24c2705992c4a765f04d19ab58bfec2bf948f"
+      ],
+      "files": [
+        "docs/problem-definition.md",
+        "App.tsx",
+        "reports/week-01/baseline.json",
+        "reports/week-01/evidence/before-pass.png",
+        "reports/week-01/evidence/controlled-failure.png",
+        "reports/week-01/evidence/after-fix.png"
+      ],
+      "tests": [
+        "make feedback — pasó typecheck, lint, smoke test y bundle Android; audit reportó una vulnerabilidad moderada existente.",
+        "npm run test:smoke en 092404b4 — falló porque recibió Backend: offline en lugar de available.",
+        "npm run test:smoke en 1bde86a7 — pasó 1 suite y 1 test.",
+        "make verify-week-01 — pasó.",
+        "agent-browser — capturó los estados antes, durante la falla y después de la corrección."
+      ],
+      "reviews": [
+        "Revisión del flujo reportar → asignar → atender → cerrar contra docs/CAMPUSOPS.md.",
+        "Revisión de la diferencia entre síntoma visual (offline) y causa (transición de éxito incorrecta en App.tsx)."
+      ],
+      "prediction": "Al cambiar la transición de éxito de getBackendHealth para asignar offline, esperaba que la interfaz mostrara Backend: offline y que el smoke test detectara la regresión.",
+      "command": "npm run test:smoke",
+      "observedResult": "La ejecución con 092404b4 falló: esperaba available y recibió Backend: offline. Tras restaurar available, la ejecución con 1bde86a7 pasó.",
+      "explanation": "Se definió el problema y alcance de CampusOps, se reprodujo una regresión controlada en App.tsx, se distinguió el síntoma de la causa, se corrigió la transición y se registró la evidencia reproducible en baseline.json con capturas agent-browser. Reemplazar el studentId por el identificador oficial antes de subir."
+    },
+    {
+      "studentId": "3523110409",
+      "commitShas": [
+        "2f8103580dfe662c20b042cc18010da3d42e7516",
+        "f4a403c2cf53d1a3450cedb4ac9c62f644b0cefa",
+        "0844224235e2f6cc73812b4923034f0bbaef3ff4",
+        "f4361881652422e20708d896f4667230a39f85f8"
+      ],
+      "files": [
+        "docs/problem-definition.md",
+        "App.tsx",
+        "reports/week-01/baseline.json",
+        "reports/week-01/evidence/integrante2-before-real.png",
+        "reports/week-01/evidence/integrante2-failure-real.png",
+        "reports/week-01/evidence/integrante2-after-real.png"
+      ],
+      "tests": [
+        "npm run test:smoke (falla con 'Backend: checking')",
+        "npm run test:smoke (pasa tras restaurar 'available')"
+      ],
+      "reviews": [
+        "Revisión de la falla controlada del integrante 1 (available→offline) en baseline.json",
+        "Revisión de la diferencia entre síntoma (checking/offline) y causa (transición en App.tsx:13)"
+      ],
+      "prediction": "Al cambiar setStatus('available') por setStatus('checking') en App.tsx:13, esperaba que el smoke test fallara mostrando 'Backend: checking' en lugar de 'available', y que al restaurar 'available' el test volviera a pasar.",
+      "command": "npm run test:smoke",
+      "observedResult": "Con App.tsx:13 en 'checking' el test falló (recibió 'Backend: checking'). Tras restaurar 'available' el test pasó (1 suite, 1 test).",
+      "explanation": "Introduje una falla controlada en la transición de éxito de getBackendHealth (App.tsx:13), documenté la regresión en baseline.json con 3 checks dedicados, capturé 3 evidencias reales (antes/fallo/después) y corregí la falla restaurando el estado correcto. El proyecto quedó funcional."
+    },
+    {
+      "studentId": "3523110016",
+      "commitShas": [
+        "95bf3d150eb116bc9c0eea3f06870e91f83ad5d7"
+      ],
+      "files": [
+        "App.tsx",
+        "reports/week-01/baseline.json",
+        "reports/week-01/evidence/jaime-before-pass.png",
+        "reports/week-01/evidence/jaime-title-failure.png",
+        "reports/week-01/evidence/jaime-after-fix.png",
+        "docs/risk-register.md"
+      ],
+      "tests": [
+        "npm run test:smoke (estado inicial) — pasó, 1 suite, 1 test.",
+        "npm run test:smoke (con falla en título) — falló: Unable to find an element with text: CampusOps.",
+        "npm run test:smoke (corregido) — pasó, 1 suite, 1 test."
+      ],
+      "reviews": [
+        "Revisión del smoke test (course-tests/smoke.test.tsx) y de courseBackend.ts para identificar una aserción no cubierta por las fallas de mis compañeros.",
+        "Análisis y priorización de tres riesgos generales del proyecto en docs/risk-register.md."
+      ],
+      "prediction": "Al cambiar el texto del título de 'CampusOps' a 'CampusOps App' en App.tsx, esperaba que el smoke test fallara porque la aserción getByText('CampusOps') busca coincidencia exacta.",
+      "command": "npm run test:smoke",
+      "observedResult": "La ejecución con la falla activa mostró: 'Unable to find an element with text: CampusOps'. Después de restaurar el texto original, el test volvió a pasar (1 suite, 1 test).",
+      "explanation": "Se documentaron y priorizaron tres riesgos generales del proyecto CampusOps en docs/risk-register.md. Además, se reprodujo una falla controlada distinta a la de mis compañeros , se distinguió el síntoma (texto no encontrado) de la causa (texto alterado), se corrigió y se registró la evidencia en reports/week-01/baseline.json junto con capturas de terminal."
+    }
+  ]
+}
