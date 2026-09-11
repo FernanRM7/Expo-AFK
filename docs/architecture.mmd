@@ -1,0 +1,78 @@
+flowchart LR
+  reportante["Reportante"]
+  tecnico["Técnico"]
+  coordinador["Coordinador"]
+
+  subgraph ui["ui"]
+    incidentsUI["Pantallas de incidencias"]
+    sessionUI["Pantallas de sesión"]
+    locationUI["Captura de ubicación"]
+  end
+
+  subgraph application["application"]
+    incidentsApp["Casos de uso de incidencias"]
+    assignmentsApp["Casos de uso de asignaciones"]
+    sessionApp["Casos de uso de sesión"]
+    persistenceApp["Orquestación de persistencia"]
+    syncApp["Casos de uso de sincronización"]
+    locationApp["Casos de uso de ubicación"]
+  end
+
+  subgraph domain["domain"]
+    incidentRules["Reglas y entidades de incidencias"]
+    accessRules["Roles y autorización"]
+    incidentPorts["Contrato de repositorio de incidencias"]
+    sessionPort["Contrato de sesión"]
+    persistencePort["Contrato de persistencia"]
+    locationPort["Contrato de proveedor de ubicación"]
+  end
+
+  subgraph infrastructure["infrastructure"]
+    incidentAdapter["Adaptador de repositorio de incidencias"]
+    sessionAdapter["Adaptador de sesión"]
+    persistenceAdapter["Adaptador de persistencia"]
+    locationAdapter["Adaptador de proveedor de ubicación"]
+    externalProvider["Proveedor de mapas o geocodificación"]
+  end
+
+  reportante --> incidentsUI
+  tecnico --> incidentsUI
+  coordinador --> incidentsUI
+  reportante --> sessionUI
+  tecnico --> sessionUI
+  coordinador --> sessionUI
+  reportante --> locationUI
+  tecnico --> locationUI
+
+  incidentsUI --> incidentsApp
+  sessionUI --> sessionApp
+  locationUI --> locationApp
+
+  incidentsApp --> incidentRules
+  incidentsApp --> accessRules
+  incidentsApp --> incidentPorts
+  assignmentsApp --> incidentRules
+  assignmentsApp --> accessRules
+  assignmentsApp --> incidentPorts
+  sessionApp --> accessRules
+  sessionApp --> sessionPort
+  persistenceApp --> persistencePort
+  syncApp --> persistencePort
+  locationApp --> locationPort
+
+  incidentAdapter -. implements .-> incidentPorts
+  sessionAdapter -. implements .-> sessionPort
+  persistenceAdapter -. implements .-> persistencePort
+  locationAdapter -. implements .-> locationPort
+  locationAdapter --> externalProvider
+
+  classDef actor fill:#fff3cd,stroke:#8a6d1d,color:#3d3000
+  classDef layer fill:#e8f1fb,stroke:#24527a,color:#102a43
+  classDef contract fill:#e8f5e9,stroke:#2e7d32,color:#173b1a
+  classDef adapter fill:#fce4ec,stroke:#ad1457,color:#4a1027
+  class reportante,tecnico,coordinador actor
+  class incidentsUI,sessionUI,locationUI,incidentsApp,assignmentsApp,sessionApp,persistenceApp,syncApp,locationApp,incidentRules,accessRules layer
+  class incidentPorts,sessionPort,persistencePort,locationPort contract
+  class incidentAdapter,sessionAdapter,persistenceAdapter,locationAdapter,externalProvider adapter
+
+  linkStyle 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26 stroke:#24527a
