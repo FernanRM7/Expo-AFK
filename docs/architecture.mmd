@@ -1,38 +1,38 @@
 flowchart LR
   reportante["Reportante"]
-  tecnico["Tecnico"]
+  tecnico["Técnico"]
   coordinador["Coordinador"]
 
   subgraph ui["ui"]
-    incidentsUI["Incidents screens"]
-    sessionUI["Session screens"]
-    locationUI["Location input"]
+    incidentsUI["Pantallas de incidencias"]
+    sessionUI["Pantallas de sesión"]
+    locationUI["Captura de ubicación"]
   end
 
   subgraph application["application"]
-    incidentsApp["Incidents use cases"]
-    assignmentsApp["Assignments use cases"]
-    sessionApp["Session use cases"]
-    persistenceApp["Persistence orchestration"]
-    syncApp["Sync use cases"]
-    locationApp["Location use cases"]
+    incidentsApp["Casos de uso de incidencias"]
+    assignmentsApp["Casos de uso de asignaciones"]
+    sessionApp["Casos de uso de sesión"]
+    persistenceApp["Orquestación de persistencia"]
+    syncApp["Casos de uso de sincronización"]
+    locationApp["Casos de uso de ubicación"]
   end
 
   subgraph domain["domain"]
-    incidentRules["Incident rules and entities"]
-    accessRules["Roles and authorization"]
-    incidentPorts["IncidentRepository contract"]
-    sessionPort["Session contract"]
-    persistencePort["Persistence contract"]
-    locationPort["LocationProvider contract"]
+    incidentRules["Reglas y entidades de incidencias"]
+    accessRules["Roles y autorización"]
+    incidentPorts["Contrato de repositorio de incidencias"]
+    sessionPort["Contrato de sesión"]
+    persistencePort["Contrato de persistencia"]
+    locationPort["Contrato de proveedor de ubicación"]
   end
 
   subgraph infrastructure["infrastructure"]
-    incidentAdapter["Incident repository adapter"]
-    sessionAdapter["Session adapter"]
-    persistenceAdapter["Persistence adapter"]
-    locationAdapter["Location provider adapter"]
-    externalProvider["Map or geocoding provider"]
+    incidentAdapter["Adaptador de repositorio de incidencias"]
+    sessionAdapter["Adaptador de sesión"]
+    persistenceAdapter["Adaptador de persistencia"]
+    locationAdapter["Adaptador de proveedor de ubicación"]
+    externalProvider["Proveedor de mapas o geocodificación"]
   end
 
   reportante --> incidentsUI
