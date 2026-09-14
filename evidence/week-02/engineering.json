@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 2,
-  "commitSha": "ec347292a5ded9cb07c504f4341c85e370329011",
+  "commitSha": "3273d3c8e7af8b721b6eed506eba13cb0ac1a6a3",
   "decision": "Adoptar una arquitectura feature-first híbrida: organizar incidents, assignments, sync y location como funcionalidades con capas ui, application, domain e infrastructure internas, mientras session y persistence exponen servicios compartidos mediante contratos sustituibles.",
   "alternatives": [
     "Arquitectura global por capas con ui, application, domain e infrastructure compartidas para toda la aplicación; simplifica la vista general, pero dispersa las piezas de cada funcionalidad.",
