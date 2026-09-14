@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "week": 2,
+  "commitSha": "ec347292a5ded9cb07c504f4341c85e370329011",
+  "decision": "Adoptar una arquitectura feature-first híbrida: organizar incidents, assignments, sync y location como funcionalidades con capas ui, application, domain e infrastructure internas, mientras session y persistence exponen servicios compartidos mediante contratos sustituibles.",
+  "alternatives": [
+    "Arquitectura global por capas con ui, application, domain e infrastructure compartidas para toda la aplicación; simplifica la vista general, pero dispersa las piezas de cada funcionalidad.",
+    "Organización feature-first híbrida con las mismas capas internas por funcionalidad y servicios compartidos para session y persistence; mantiene juntas las capacidades y facilita sustituir adaptadores.",
+    "Organización únicamente por pantallas y componentes, con acceso directo a proveedores desde cada pantalla; reduce estructura inicial, pero dificulta probar reglas y cambiar proveedores sin modificar la UI."
+  ],
+  "tradeoff": "La alternativa feature-first híbrida agrega directorios, contratos y disciplina para mantener dependencias dirigidas, pero reduce el acoplamiento entre funcionalidades y permite probar casos de uso con dobles deterministas. El costo inicial se acepta porque el proyecto necesita operación offline, persistencia sustituible y cambio futuro de proveedor de ubicación sin rehacer la UI.",
+  "requirementIds": [
+    "AC-02",
+    "AC-03",
+    "AC-04"
+  ],
+  "verification": [
+    {
+      "command": "npm test -- --ci --runInBand src/features/incidents/architecture.test.ts src/features/incidents/ui/IncidentListScreen.test.tsx",
+      "result": "PASS - 2 suites y 5 tests pasaron.",
+      "evidence": "La prueba de imports confirmó los límites domain/application/ui y la prueba de UI confirmó el comportamiento de la lista de incidencias."
+    },
+    {
+      "command": "make verify-week-02",
+      "result": "PASS - typecheck, lint, audit:ci y smoke test pasaron.",
+      "evidence": "La verificación del repositorio terminó con status pass sobre el esqueleto integrado en main."
+    },
+    {
+      "command": "npm test -- --ci --runInBand src/features/incidents/architecture.test.ts",
+      "result": "La ejecución con un import temporal ui → infrastructure falló; al retirar el import, volvió a pasar.",
+      "evidence": "reports/week-02/dependencies.json registra el fallo controlado, la causa, el efecto y el estado corregido."
+    }
+  ]
+}
