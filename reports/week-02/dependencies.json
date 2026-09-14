@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "week": 2,
+  "commitSha": "3bf2a967c0336eb21cd3f0d47fbf54553b25ca71",
+  "generatedAt": "2026-09-13T23:59:25Z",
+  "checks": [
+    {
+      "id": "controlled-ui-infrastructure-violation",
+      "status": "fail",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand src/features/incidents/architecture.test.ts",
+      "evidence": "Con el import temporal ../infrastructure/inMemoryIncidentRepository en IncidentListScreen.tsx, el test terminó con exit code 1 y reportó esa ruta en prohibidos para la capa ui."
+    },
+    {
+      "id": "corrected-architecture-boundaries",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand src/features/incidents/architecture.test.ts",
+      "evidence": "Después de retirar el import prohibido, las tres pruebas de límites pasaron: domain sin dependencias prohibidas, application sin ui/infrastructure y ui sin infrastructure."
+    },
+    {
+      "id": "integrated-skeleton-verification",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "make verify-week-02",
+      "evidence": "El evaluador de verificación terminó con status pass; typecheck, lint, audit:ci y smoke test pasaron, sin bypasses ni secretos detectados."
+    }
+  ]
+}
