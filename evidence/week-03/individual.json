@@ -23,6 +23,26 @@
       "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts",
       "observedResult": "La suite pasó: 1 suite y 2 tests. Confirmó la integridad del workflow y el vínculo entre activos, amenazas, controles y verificaciones.",
       "explanation": "Realicé la matriz de amenazas de esta issue en docs/threat-model.md, conectando autorización, idempotencia, secret scan, permisos mínimos y fixtures sintéticos con verificaciones concretas."
+    },
+    {
+      "studentId": "3523110016",
+      "commitShas": [
+        "0c016ee6607a8b6f68c9cb9e74bc142df5375e0d"
+      ],
+      "files": [
+        "docs/threat-model.md"
+      ],
+      "tests": [
+        "npm test -- --runInBand course-tests/public/week-03.test.ts — la suite pública pasó con 2 tests después de agregar las secciones Activos, Fronteras y las amenazas T-06 a T-09."
+      ],
+      "reviews": [
+        "Comparación de docs/threat-model.md contra el issue #29 para identificar que faltaban las secciones de Activos y Fronteras.",
+        "Revisión de CAMPUSOPS.md y CAMPUSOPS_API.md para redactar las amenazas T-06 a T-09 consultar incidencias ajenas, alterar asignaciones, filtrar logs, exponer credenciales usando los endpoints y campos reales del contrato."
+      ],
+      "prediction": "Esperaba que, al agregar las secciones de Activos, Fronteras y las cuatro amenazas priorizadas , la prueba pública siguiera pasando sin romper la matriz existente de controles .",
+      "command": "npm test -- --runInBand course-tests/public/week-03.test.ts",
+      "observedResult": "La suite pasó: 1 suite y 2 tests, lo que confirma que el documento sigue vinculando activos, amenazas, fronteras, controles y riesgo residual despues del cambio.",
+      "explanation": "Completé el issue #29 agregando al documento existente las secciones 'Activos' y 'Fronteras', y cuatro amenazas priorizadas nuevas (T-06 a T-09) con su control, prueba reproducible, resultado esperado, prioridad justificada y riesgo residual, alineadas con los perfiles, rutas y campos definidos en CAMPUSOPS.md y CAMPUSOPS_API.md."
     }
   ]
 }
