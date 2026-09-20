@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "week": 3,
+  "commitSha": "d1bc16e0b529fcf490e470ddbf933fd14f22fced",
+  "decision": "Atender primero el riesgo de que un workflow de contribución obtenga permisos excesivos o relaje las puertas de calidad, usando permisos mínimos, historial completo para validar la evidencia y comprobaciones obligatorias que fallen de forma visible. Este riesgo tiene prioridad porque puede afectar el repositorio y ocultar simultáneamente fallos de seguridad, calidad y trazabilidad.",
+  "alternatives": [
+    "Mantener el workflow con permisos implícitos y confiar en la configuración predeterminada de GitHub; reduce cambios iniciales, pero deja ambiguo el alcance de acceso y dificulta detectar una ampliación accidental.",
+    "Declarar permissions: contents: read, ejecutar las comprobaciones sin bypasses, conservar artefactos y usar fetch-depth: 0; añade una configuración explícita y algo de tiempo de ejecución, pero permite verificar metadatos y fallos reproducibles.",
+    "Separar las comprobaciones de seguridad en un workflow externo o manual; podría reducir la duración del workflow principal, pero deja la integración sin una puerta automática y permite fusionar cambios sin evidencia inmediata."
+  ],
+  "tradeoff": "La decisión de usar mínimo privilegio, historial completo y fallos obligatorios aumenta el tiempo de ejecución y exige mantener los metadatos de evidencia al integrar commits nuevos. A cambio, reduce la superficie de permisos, evita que los checks se conviertan en recomendaciones ignorables y permite reproducir el vínculo entre el SHA evaluado, el diagnóstico de fallo y la corrección.",
+  "requirementIds": [
+    "AC-01",
+    "AC-02",
+    "AC-03",
+    "AC-04",
+    "AC-05"
+  ],
+  "verification": [
+    {
+      "command": "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege'",
+      "result": "PASS después de restaurar el workflow correcto.",
+      "evidence": "La prueba confirmó permissions: contents: read, Node 22, instalación delegada, comprobaciones obligatorias y ausencia de bypasses."
+    },
+    {
+      "command": "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege' (con permissions: contents: read retirado temporalmente)",
+      "result": "FAIL con exit code 1.",
+      "evidence": "La prueba reportó que no encontró el bloque de permisos mínimos; el diagnóstico fue conservado en reports/week-03/security.json y el workflow fue restaurado."
+    },
+    {
+      "command": "git diff --check && python3 -m json.tool evidence/week-03/individual.json",
+      "result": "PASS.",
+      "evidence": "La evidencia individual quedó formada por exactamente tres integrantes y los JSON no contienen errores de formato ni whitespace inválido."
+    }
+  ]
+}

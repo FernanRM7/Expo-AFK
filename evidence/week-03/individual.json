@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "week": 3,
+  "teamId": "9B-E11",
+  "members": [
+    {
+      "studentId": "3523110409",
+      "commitShas": [
+        "cb4562359247b0f56b17e1c20666caa8b14c2dbd"
+      ],
+      "files": [
+        "docs/threat-model.md"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/public/week-03.test.ts — la suite pública pasó con 2 tests.",
+        "Revisión de la matriz para confirmar que cada amenaza tiene activo, control, prueba, resultado esperado, prioridad y riesgo residual."
+      ],
+      "reviews": [
+        "Revisión de que los cinco controles previstos estén conectados a comandos reproducibles.",
+        "Revisión de que la prioridad esté justificada y que ninguna amenaza quede solo descrita."
+      ],
+      "prediction": "Esperaba que la matriz conectara cada amenaza con un control y una verificación reproducible, y que la prueba pública confirmara la estructura del modelo.",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts",
+      "observedResult": "La suite pasó: 1 suite y 2 tests. Confirmó la integridad del workflow y el vínculo entre activos, amenazas, controles y verificaciones.",
+      "explanation": "Realicé la matriz de amenazas de esta issue en docs/threat-model.md, conectando autorización, idempotencia, secret scan, permisos mínimos y fixtures sintéticos con verificaciones concretas."
+    },
+    {
+      "studentId": "3523110016",
+      "commitShas": [
+        "0c016ee6607a8b6f68c9cb9e74bc142df5375e0d"
+      ],
+      "files": [
+        "docs/threat-model.md"
+      ],
+      "tests": [
+        "npm test -- --runInBand course-tests/public/week-03.test.ts — la suite pública pasó con 2 tests después de agregar las secciones Activos, Fronteras y las amenazas T-06 a T-09."
+      ],
+      "reviews": [
+        "Comparación de docs/threat-model.md contra el issue #29 para identificar que faltaban las secciones de Activos y Fronteras.",
+        "Revisión de CAMPUSOPS.md y CAMPUSOPS_API.md para redactar las amenazas T-06 a T-09 consultar incidencias ajenas, alterar asignaciones, filtrar logs, exponer credenciales usando los endpoints y campos reales del contrato."
+      ],
+      "prediction": "Esperaba que, al agregar las secciones de Activos, Fronteras y las cuatro amenazas priorizadas , la prueba pública siguiera pasando sin romper la matriz existente de controles .",
+      "command": "npm test -- --runInBand course-tests/public/week-03.test.ts",
+      "observedResult": "La suite pasó: 1 suite y 2 tests, lo que confirma que el documento sigue vinculando activos, amenazas, fronteras, controles y riesgo residual despues del cambio.",
+      "explanation": "Completé el issue #29 agregando al documento existente las secciones 'Activos' y 'Fronteras', y cuatro amenazas priorizadas nuevas (T-06 a T-09) con su control, prueba reproducible, resultado esperado, prioridad justificada y riesgo residual, alineadas con los perfiles, rutas y campos definidos en CAMPUSOPS.md y CAMPUSOPS_API.md."
+    },
+    {
+      "studentId": "3523110657",
+      "commitShas": [
+        "46de5a4b07beb90d2ce7ca6d9a1ce3aac9541abf"
+      ],
+      "files": [
+        ".github/workflows/week-03-ci-amenazas-feedback.yml",
+        "reports/week-03/security.json"
+      ],
+      "tests": [
+        "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege' — falló al retirar temporalmente permissions: contents: read.",
+        "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege' — pasó después de restaurar el permiso mínimo."
+      ],
+      "reviews": [
+        "Revisión de que el workflow falla ante la ausencia de permisos mínimos y conserva las comprobaciones obligatorias.",
+        "Revisión de que security.json registra el diagnóstico del fallo y el resultado corregido sin incluir la mutación temporal."
+      ],
+      "prediction": "Esperaba que retirar permissions: contents: read hiciera fallar la comprobación de mínimo privilegio y que restaurarlo devolviera la prueba a estado exitoso.",
+      "command": "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege'",
+      "observedResult": "La prueba terminó con exit code 1 durante la mutación controlada y pasó después de restaurar el workflow; ambos resultados quedaron registrados en reports/week-03/security.json.",
+      "explanation": "Implementé la demostración de fallo del issue #31: retiré temporalmente el permiso mínimo, conservé el diagnóstico, restauré la configuración correcta y documenté la corrección en el reporte de seguridad."
+    }
+  ]
+}

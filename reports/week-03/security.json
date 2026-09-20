@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "week": 3,
+  "commitSha": "d1bc16e0b529fcf490e470ddbf933fd14f22fced",
+  "generatedAt": "2026-09-20T16:48:00Z",
+  "checks": [
+    {
+      "id": "workflow-required-permissions",
+      "status": "fail",
+      "scenarioType": "failure",
+      "command": "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege'",
+      "evidence": "Se retiró temporalmente permissions: contents: read del workflow. La prueba terminó con exit code 1 y reportó que no encontró el bloque de permisos mínimos; las dos copias descubiertas de la prueba fallaron."
+    },
+    {
+      "id": "workflow-required-permissions-restored",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege'",
+      "evidence": "Se restauró permissions: contents: read sin modificar las pruebas. Las dos copias descubiertas de la suite pasaron: 2 passed y 2 skipped."
+    }
+  ]
+}
