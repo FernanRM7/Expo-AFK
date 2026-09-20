@@ -37,6 +37,7 @@ jobs:
       - name: AC-02 — public behavior
         run: make public-test-week-01
       - name: AC-03 — declared failure evidence
+        if: github.ref == 'refs/tags/week-01-final'
         run: make evidence-week-01
       - name: Upload academic evidence
         if: always()
