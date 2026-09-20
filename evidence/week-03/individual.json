@@ -43,6 +43,28 @@
       "command": "npm test -- --runInBand course-tests/public/week-03.test.ts",
       "observedResult": "La suite pasó: 1 suite y 2 tests, lo que confirma que el documento sigue vinculando activos, amenazas, fronteras, controles y riesgo residual despues del cambio.",
       "explanation": "Completé el issue #29 agregando al documento existente las secciones 'Activos' y 'Fronteras', y cuatro amenazas priorizadas nuevas (T-06 a T-09) con su control, prueba reproducible, resultado esperado, prioridad justificada y riesgo residual, alineadas con los perfiles, rutas y campos definidos en CAMPUSOPS.md y CAMPUSOPS_API.md."
+    },
+    {
+      "studentId": "3523110657",
+      "commitShas": [
+        "46de5a4b07beb90d2ce7ca6d9a1ce3aac9541abf"
+      ],
+      "files": [
+        ".github/workflows/week-03-ci-amenazas-feedback.yml",
+        "reports/week-03/security.json"
+      ],
+      "tests": [
+        "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege' — falló al retirar temporalmente permissions: contents: read.",
+        "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege' — pasó después de restaurar el permiso mínimo."
+      ],
+      "reviews": [
+        "Revisión de que el workflow falla ante la ausencia de permisos mínimos y conserva las comprobaciones obligatorias.",
+        "Revisión de que security.json registra el diagnóstico del fallo y el resultado corregido sin incluir la mutación temporal."
+      ],
+      "prediction": "Esperaba que retirar permissions: contents: read hiciera fallar la comprobación de mínimo privilegio y que restaurarlo devolviera la prueba a estado exitoso.",
+      "command": "./node_modules/.bin/jest --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege'",
+      "observedResult": "La prueba terminó con exit code 1 durante la mutación controlada y pasó después de restaurar el workflow; ambos resultados quedaron registrados en reports/week-03/security.json.",
+      "explanation": "Implementé la demostración de fallo del issue #31: retiré temporalmente el permiso mínimo, conservé el diagnóstico, restauré la configuración correcta y documenté la corrección en el reporte de seguridad."
     }
   ]
 }
