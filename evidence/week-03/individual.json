@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "week": 3,
+  "teamId": "9B-E11",
+  "members": [
+    {
+      "studentId": "3523110409",
+      "commitShas": [
+        "cb4562359247b0f56b17e1c20666caa8b14c2dbd"
+      ],
+      "files": [
+        "docs/threat-model.md"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/public/week-03.test.ts — la suite pública pasó con 2 tests.",
+        "Revisión de la matriz para confirmar que cada amenaza tiene activo, control, prueba, resultado esperado, prioridad y riesgo residual."
+      ],
+      "reviews": [
+        "Revisión de que los cinco controles previstos estén conectados a comandos reproducibles.",
+        "Revisión de que la prioridad esté justificada y que ninguna amenaza quede solo descrita."
+      ],
+      "prediction": "Esperaba que la matriz conectara cada amenaza con un control y una verificación reproducible, y que la prueba pública confirmara la estructura del modelo.",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts",
+      "observedResult": "La suite pasó: 1 suite y 2 tests. Confirmó la integridad del workflow y el vínculo entre activos, amenazas, controles y verificaciones.",
+      "explanation": "Realicé la matriz de amenazas de esta issue en docs/threat-model.md, conectando autorización, idempotencia, secret scan, permisos mínimos y fixtures sintéticos con verificaciones concretas."
+    }
+  ]
+}
