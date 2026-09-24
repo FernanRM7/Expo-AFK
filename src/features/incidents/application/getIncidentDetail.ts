@@ -6,5 +6,11 @@ export async function getIncidentDetail(
     repository: IncidentRepository,
     incidentId: string,
 ): Promise<Incident | null> {
-    return repository.getById(incidentId);
+    const incident = await repository.getById(incidentId);
+    console.log({
+        incidentId,
+        found: incident !== null,
+        status: incident?.status ?? null,
+    });
+    return incident;
 }

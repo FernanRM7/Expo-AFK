@@ -4,10 +4,18 @@ export type BackendHealth = Readonly<{
   contractVersion: 1;
 }>;
 
-const DEFAULT_URL = 'http://127.0.0.1:4310';
+function resolveBackendUrl(): string {
+  const url = process.env.EXPO_PUBLIC_COURSE_BACKEND_URL;
+  if (!url) {
+    throw new Error(
+      'EXPO_PUBLIC_COURSE_BACKEND_URL no está configurada. Define esta variable en tu archivo .env (ver .env.example).',
+    );
+  }
+  return url;
+}
 
 export async function getBackendHealth(
-  baseUrl = process.env.EXPO_PUBLIC_COURSE_BACKEND_URL ?? DEFAULT_URL,
+  baseUrl = resolveBackendUrl(),
 ): Promise<BackendHealth> {
   const response = await fetch(`${baseUrl}/health`);
   if (!response.ok) {
