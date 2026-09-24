@@ -4,7 +4,7 @@ Este contrato concreta los criterios existentes, sin añadir puntos ni cambiar r
 
 ## Backend didáctico
 
-Ejecutar `make run-backend`; comprobar `npm run backend:self-test`. La dirección por defecto es `http://127.0.0.1:4310`. En emulador Android usar `http://10.0.2.2:4310`; para dispositivo físico usar la IP de desarrollo autorizada y configurar `COURSE_BACKEND_HOST` sólo en una red de laboratorio. Nunca exponer este simulador a Internet.
+Ejecutar `make run-backend`; comprobar `npm run backend:self-test`. La dirección por defecto es `http://127.0.0.1:4310`. En emulador Android usar `http://10.0.2.2:4310`; para dispositivo físico usar la IP de desarrollo autorizada y configurar `COURSE_BACKEND_HOST` junto con `COURSE_BACKEND_ALLOW_REMOTE=1` sólo en una red de laboratorio de confianza. El servidor rechaza por defecto cualquier bind que no sea loopback. CORS sólo permite por defecto `http://localhost:8081` y `http://127.0.0.1:8081`; para otro origen de desarrollo configurar `COURSE_BACKEND_ALLOWED_ORIGINS` como lista separada por comas. Nunca exponer este simulador a Internet.
 
 Los actores públicos de prueba son `reporter-1`, `reporter-2`, `technician-1`, `technician-2` y `coordinator-1`. No son matrículas ni miembros del roster. `POST /v1/session/login` con `{ "actorId": "technician-1" }` devuelve la sesión sintética. Las rutas CampusOps usan `Authorization: Bearer course-valid-token` y `X-Course-Actor` con el ID seleccionado. Estos valores son fixtures públicos, no secretos ni autenticación de producción. Ninguna app real debe confiar en un rol enviado por el cliente.
 

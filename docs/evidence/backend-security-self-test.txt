@@ -1,0 +1,25 @@
+Auditoría de seguridad Semana 4 — evidencia reproducible
+
+Comando: npm run backend:self-test
+Resultado: PASS (exit code 0)
+
+> dmi-react-native-starter@1.0.0 backend:self-test
+> node course-backend/self-test.mjs
+
+CampusOps backend contracts: roles, reassignment conflict, lost response, idempotency, evidence and geocoding PASS.
+Controlled backend self-test passed.
+
+El self-test incluye estas aserciones añadidas para la auditoría:
+- COURSE_BACKEND_HOST=0.0.0.0 sin COURSE_BACKEND_ALLOW_REMOTE=1 termina con código 1 y el mensaje de rechazo de bind.
+- Origin http://localhost:8081 recibe Access-Control-Allow-Origin para /health.
+- Origin https://untrusted.example no recibe Access-Control-Allow-Origin para /health.
+
+Comprobaciones Git de .env:
+
+.env no está rastreado
+.gitignore:8:.env	.env
+
+Plantilla de entorno rastreada:
+.env.example
+
+Los tokens/actores utilizados por los tests son fixtures públicos ficticios; no se usaron credenciales reales.

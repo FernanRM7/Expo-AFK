@@ -4,12 +4,23 @@ import { handleCampusOps } from './campusops.mjs';
 
 const host = process.env.COURSE_BACKEND_HOST ?? '127.0.0.1';
 const port = Number(process.env.COURSE_BACKEND_PORT ?? 4310);
+const allowedOrigins = new Set(
+  (process.env.COURSE_BACKEND_ALLOWED_ORIGINS ?? 'http://localhost:8081,http://127.0.0.1:8081')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
+const loopbackHosts = new Set(['127.0.0.1', '::1', 'localhost']);
 const completedOperations = new Map();
+
+if (!loopbackHosts.has(host) && process.env.COURSE_BACKEND_ALLOW_REMOTE !== '1') {
+  process.stderr.write('Refusing non-loopback bind; set COURSE_BACKEND_ALLOW_REMOTE=1 only on a trusted lab network.\n');
+  process.exit(1);
+}
 
 function send(response, status, body, headers = {}) {
   const value = typeof body === 'string' ? body : JSON.stringify(body);
   response.writeHead(status, {
-    'access-control-allow-origin': '*',
     'content-type': typeof body === 'string' ? 'application/json' : 'application/json; charset=utf-8',
     ...headers,
   });
@@ -30,6 +41,16 @@ async function readJson(request) {
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? `${host}:${port}`}`);
   const scenario = request.headers['x-course-scenario'] ?? 'success';
+  const origin = request.headers.origin;
+  response.setHeader('vary', 'Origin');
+  if (typeof origin === 'string' && allowedOrigins.has(origin)) {
+    response.setHeader('access-control-allow-origin', origin);
+    response.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+    response.setHeader(
+      'access-control-allow-headers',
+      'Authorization, Content-Type, Idempotency-Key, X-Course-Actor, X-Course-Scenario',
+    );
+  }
 
   if (request.method === 'OPTIONS') return send(response, 204, '');
   if (request.method === 'GET' && url.pathname === '/health') {
