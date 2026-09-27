@@ -52,6 +52,40 @@ test('redacts nested objects and lists without mutating the original structure',
   expect(input.request['refresh-token']).toBe('synthetic-refresh-token');
 });
 
+test('redacts nested photos and evidence without mutating the input', () => {
+  const input = {
+    incident: {
+      updates: [
+        {
+          kind: 'field_note',
+          photos: ['synthetic-photo-uri'],
+          details: {
+            evidence: [{ fileName: 'synthetic-proof.jpg', uri: 'synthetic-evidence-uri' }],
+            note: 'Nota sintética segura',
+          },
+        },
+      ],
+    },
+  };
+  const original = structuredClone(input);
+
+  expect(redactForTelemetry(input)).toEqual({
+    incident: {
+      updates: [
+        {
+          kind: 'field_note',
+          photos: '[REDACTED]',
+          details: {
+            evidence: '[REDACTED]',
+            note: 'Nota sintética segura',
+          },
+        },
+      ],
+    },
+  });
+  expect(input).toEqual(original);
+});
+
 test('error telemetry redacts sensitive context while preserving technical fields', () => {
   const send = jest.fn();
   configureTelemetrySink(send);
