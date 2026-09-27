@@ -12,5 +12,8 @@
   "include": [
     "**/*.ts",
     "**/*.tsx"
+  ],
+  "exclude": [
+    "week-04-seguridad-privacidad/**"
   ]
 }
