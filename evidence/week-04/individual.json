@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "week": 4,
+  "teamId": "9B-E11",
+  "members": [
+    {
+      "studentId": "3523110409",
+      "commitShas": [
+        "b298e3f162a841ade7db900c9d1b432f9c65ee39"
+      ],
+      "files": [
+        "course-tests/public/week-04.test.ts"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/public/week-04.test.ts — suite aprobada con 5 tests."
+      ],
+      "reviews": [],
+      "prediction": "Esperaba que los campos photos y evidence se redactaran aunque estuvieran dentro de objetos y listas, que los datos no sensibles se conservaran y que la sanitización no mutara la entrada original.",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-04.test.ts",
+      "observedResult": "La suite pasó: 1 suite y 5 tests. El nuevo caso confirmó la redacción de photos y evidence anidados, la conservación de una nota segura y que input permaneciera igual a su copia original.",
+      "explanation": "Agregué un test de regresión independiente en course-tests/public/week-04.test.ts con fotos y evidencias sintéticas anidadas en objetos y listas. El caso comprueba la redacción de ambos campos y la ausencia de mutación de la entrada original."
+    },
+    {
+      "studentId": "3523110016",
+      "commitShas": [
+        "59286c58be070c265a1b00bc5750a179f624b4c9"
+      ],
+      "files": [
+        "course-tests/public/week-04.test.ts"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/public/week-04.test.ts — suite aprobada con 6 tests, incluido el caso HTTP 500 con payload sensible."
+      ],
+      "reviews": [],
+      "prediction": "La predicción técnica del caso era que, ante una respuesta HTTP 500 con valores sintéticos sensibles, la app devolviera un error genérico y la telemetría conservara sólo contexto técnico seguro.",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-04.test.ts",
+      "observedResult": "La suite pasó: 1 suite y 6 tests. El caso HTTP 500 confirmó que getBackendHealth sólo expone 'CampusOps service is unavailable.' y que el sink recibe { status: 500 } sin el payload sensible.",
+      "explanation": "Agregó un test independiente que simula una respuesta HTTP 500 con un payload sintético que contiene token, identidad, ubicación y comentario. Confirmó que la app expone un error genérico y que la telemetría sólo recibe estado seguro; el SHA y el resultado están registrados en el issue #39."
+    },
+    {
+      "studentId": "3523110657",
+      "commitShas": [
+        "89ef36b95bb94a510ec225e7015b969f9270ac53"
+      ],
+      "files": [
+        "src/course-evaluation/index.ts",
+        "src/features/session/infrastructure/secureSessionStorage.ts",
+        "src/telemetry/safeTelemetry.ts",
+        "src/api/courseBackend.ts"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/public/week-04.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts src/telemetry/safeTelemetry.test.ts — 3 suites y 7 tests aprobados.",
+        "make feedback — PASS; make verify-week-04 — PASS."
+      ],
+      "reviews": [],
+      "prediction": "Esperaba que SecureStore mantuviera el token fuera del almacenamiento plano, que los errores nativos no revelaran su contenido y que la telemetría conservara contexto técnico después de redactar campos sensibles anidados.",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-04.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts src/telemetry/safeTelemetry.test.ts",
+      "observedResult": "Pasaron 3 suites y 7 tests; también pasaron make feedback y make verify-week-04. La verificación pública ejecutó sus pruebas correctamente, pero su gate de evidencia quedó pendiente de los reportes y los tres registros individuales.",
+      "explanation": "Implementé la redacción recursiva e inmutable conforme al contrato CampusOps, el adaptador de tokens con Expo SecureStore y el reporte de errores con contexto sanitizado y mensajes genéricos. Documenté la elección del almacenamiento y sus riesgos residuales."
+    }
+  ]
+}

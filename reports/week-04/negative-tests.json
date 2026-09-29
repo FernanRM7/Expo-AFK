@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "week": 4,
+  "commitSha": "bd1db016dea2c7a112b8b7a099cc3c44d41f1071",
+  "generatedAt": "2026-09-29T05:03:38.744311+00:00",
+  "checks": [
+    {
+      "id": "nested-telemetry-redaction",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-04.test.ts",
+      "evidence": "6 tests aprobados. El caso de profundidad cubre objetos, listas, snake_case, kebab-case, redacción, preservación de campos técnicos y no mutación de la entrada, con valores sintéticos."
+    },
+    {
+      "id": "backend-network-failure",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-04.test.ts",
+      "evidence": "El rechazo de red con un mensaje sintético sensible expuso sólo 'CampusOps service is unavailable.'; la telemetría conservó status=network_error y no incluyó token ni ubicación."
+    },
+    {
+      "id": "backend-http-500-sensitive-payload",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-04.test.ts",
+      "evidence": "HTTP 500 con token, identidad, ubicación y comentario ficticios: error visible genérico y telemetría {status: 500}; asserts confirman que ningún valor sensible llegó al sink."
+    },
+    {
+      "id": "secure-storage-native-error",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-04.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts src/telemetry/safeTelemetry.test.ts",
+      "evidence": "La prueba del adaptador verifica guardar/leer/eliminar el token por SecureStore y que un fallo nativo se transforma en error genérico sin propagar el detalle. El conjunto combinado pasó 3 suites y 9 tests."
+    }
+  ]
+}
