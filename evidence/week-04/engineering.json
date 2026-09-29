@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 4,
-  "commitSha": "59286c58be070c265a1b00bc5750a179f624b4c9",
+  "commitSha": "736b21009bb4eba96a58bc9bce60a5ef9db3558a",
   "decision": "Persistir únicamente el token de sesión con expo-secure-store; pasar los eventos de error por un sanitizador recursivo e inmutable antes de cualquier sink de telemetría; y exponer errores genéricos sin payload ni encabezados.",
   "alternatives": [
     "Guardar el token en AsyncStorage o preferencias planas: sencillo y multiplataforma, pero no proporciona protección criptográfica adecuada para un secreto de sesión.",
