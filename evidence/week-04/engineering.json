@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "week": 4,
+  "commitSha": "59286c58be070c265a1b00bc5750a179f624b4c9",
+  "decision": "Persistir únicamente el token de sesión con expo-secure-store; pasar los eventos de error por un sanitizador recursivo e inmutable antes de cualquier sink de telemetría; y exponer errores genéricos sin payload ni encabezados.",
+  "alternatives": [
+    "Guardar el token en AsyncStorage o preferencias planas: sencillo y multiplataforma, pero no proporciona protección criptográfica adecuada para un secreto de sesión.",
+    "No persistir el token y mantenerlo sólo en memoria: reduce datos en reposo, pero pierde la sesión al cerrar/reiniciar la app y no satisface la persistencia requerida.",
+    "Usar expo-secure-store para el token pequeño y efímero: delega el almacenamiento protegido al Keychain/Keystore y mantiene datos de perfil e incidencias fuera del almacén de sesión."
+  ],
+  "tradeoff": "SecureStore mejora la protección en reposo frente a almacenamiento plano, a cambio de límites y comportamiento dependientes de plataforma y sin resolver expiración, revocación ni un dispositivo comprometido. El sanitizador reduce exposición accidental, pero no detecta sensibles dentro de texto libre ni claves nuevas que no estén en su política; todo campo nuevo y transporte de telemetría requiere revisión.",
+  "requirementIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05"],
+  "verification": [
+    {
+      "command": "make verify-week-04",
+      "result": "PASS",
+      "evidence": "Evaluator con SHA 59286c58be070c265a1b00bc5750a179f624b4c9: base files, perfil Expo, scripts, workflow, secret_scan, typecheck, lint, audit:ci y smoke test pasaron. npm audit reportó dos vulnerabilidades high existentes (xmldom y js-yaml), por debajo del umbral crítico del gate."
+    },
+    {
+      "command": "npm test -- --ci --runInBand course-tests/public/week-04.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts src/telemetry/safeTelemetry.test.ts",
+      "result": "PASS",
+      "evidence": "3 suites y 9 tests aprobados, incluidos sanitización profunda/no mutación, errores HTTP y red, y almacenamiento seguro de sesión."
+    },
+    {
+      "command": "make feedback",
+      "result": "PASS",
+      "evidence": "typecheck, lint, smoke test y bundle Expo Android completados; audit:ci terminó exitosamente con dos hallazgos high informativos."
+    }
+  ]
+}
