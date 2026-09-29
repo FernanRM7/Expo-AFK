@@ -132,3 +132,34 @@ test('backend failure exposes only a generic error and safe telemetry context', 
   expect(JSON.stringify(send.mock.calls)).not.toContain('synthetic-token');
   expect(JSON.stringify(send.mock.calls)).not.toContain('private location');
 });
+
+test('un error HTTP 500 con payload sensible expone solo un error genérico y telemetría segura', async () => {
+  const send = jest.fn();
+  configureTelemetrySink(send);
+  const payloadSensible = {
+    token: 'synthetic-secret-token',
+    userId: 'synthetic-user-id',
+    location: 'Synthetic secret location',
+    comment: 'Synthetic secret comment',
+  };
+  jest.spyOn(global, 'fetch').mockResolvedValue({
+    ok: false,
+    status: 500,
+    json: async () => payloadSensible,
+  } as Response);
+
+  await expect(getBackendHealth('http://127.0.0.1:4310')).rejects.toThrow(
+    'CampusOps service is unavailable.',
+  );
+
+  expect(send).toHaveBeenCalledWith({
+    event: 'campusops.error',
+    errorCode: 'backend_http_error',
+    context: { status: 500 },
+  });
+  const serializado = JSON.stringify(send.mock.calls);
+  expect(serializado).not.toContain('synthetic-secret-token');
+  expect(serializado).not.toContain('synthetic-user-id');
+  expect(serializado).not.toContain('Synthetic secret location');
+  expect(serializado).not.toContain('Synthetic secret comment');
+});
