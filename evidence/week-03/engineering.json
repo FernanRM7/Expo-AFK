@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 3,
-  "commitSha": "736b21009bb4eba96a58bc9bce60a5ef9db3558a",
+  "commitSha": "bd1db016dea2c7a112b8b7a099cc3c44d41f1071",
   "decision": "Atender primero el riesgo de que un workflow de contribución obtenga permisos excesivos o relaje las puertas de calidad, usando permisos mínimos, historial completo para validar la evidencia y comprobaciones obligatorias que fallen de forma visible. Este riesgo tiene prioridad porque puede afectar el repositorio y ocultar simultáneamente fallos de seguridad, calidad y trazabilidad.",
   "alternatives": [
     "Mantener el workflow con permisos implícitos y confiar en la configuración predeterminada de GitHub; reduce cambios iniciales, pero deja ambiguo el alcance de acceso y dificulta detectar una ampliación accidental.",
