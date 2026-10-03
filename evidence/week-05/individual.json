@@ -1,0 +1,52 @@
+{
+    "schemaVersion": 1,
+    "week": 5,
+    "teamId": "9B-E11",
+    "members": [
+        {
+            "studentId": "3523110016",
+            "commitShas": [
+                "fb37e0cf2aa2db8d935befbce230e9244a6d7e49",
+                "4507af2b3244cc28fab2f660aa75a3e9db51e1e9"
+            ],
+            "files": [
+                "src/course-evaluation/contracts.ts",
+                "src/api/cloudClient.ts",
+                "src/api/cloudClient.test.ts",
+                "reports/week-05/failure-matrix.json"
+            ],
+            "tests": [
+                "npx jest src/api/cloudClient.test.ts --verbose — 3 tests pasaron: contract-invalid, timeout y server-error.",
+                "npm run typecheck — sin errores nuevos relacionados a mi código"
+            ],
+            "reviews": [
+                "Definición tipada FetchErrorReason contract-invalid, timeout, server-error",
+                "Revisión de que ningún payload, encabezado o mensaje crudo llegara a los resultados de error ni a la telemetría, verificado con aserciones explícitas en las pruebas."
+            ],
+            "prediction": "Esperaba que fetchJson distinguiera los tres tipos de falla mediante el tipo FetchResult/FetchErrorReason, y que las pruebas confirmaran que ningún dato sensible del payload se filtrara a la telemetría en ninguno de los tres escenarios.",
+            "command": "npx jest src/api/cloudClient.test.ts --verbose",
+            "observedResult": "Los 3 tests pasaron: contract-invalid devolvió { kind: 'contract-invalid' }, timeout devolvió { kind: 'timeout' } tras abortar la petición, y server-error devolvió { kind: 'server-error', status: 500 }. En los casos con telemetría, los valores sensibles del payload no aparecieron en lo enviado al sink.",
+            "explanation": "Implementé fetchJson en src/api/cloudClient.ts, que usa el tipo FetchResult<T>  para distinguir contract-invalid, timeout y server-error sin propagar payloads, encabezados ni mensajes crudos y agregué pruebas deterministas con fetch sustituible para los tres escenarios y documenté los resultados en reports/week-05/failure-matrix.json."
+        },
+        {
+            "studentId": "3523110409",
+            "commitShas": [
+                "5f5a291b40a7b9faed5f6dfda02102ae78a4434e"
+            ],
+            "files": [
+                "docs/api-contract.md",
+                "src/course-evaluation/index.ts",
+                "course-tests/public/week-05.test.ts"
+            ],
+            "tests": [
+                "npm test -- --ci --runInBand course-tests/public/week-05.test.ts — 1 suite y 16 tests pasaron.",
+                "npx eslint src/course-evaluation/index.ts course-tests/public/week-05.test.ts — pasó sin errores."
+            ],
+            "reviews": [],
+            "prediction": "Esperaba que el parser rechazara sobres incompletos o con tipos inválidos, aceptara payload objeto o null sin fabricar un Incident, e ignorara campos futuros del sobre.",
+            "command": "npm test -- --ci --runInBand course-tests/public/week-05.test.ts",
+            "observedResult": "La suite pasó con 16 tests, cubriendo DTO objeto, payload null, campos vacíos y tipos incorrectos, versiones negativas/fraccionarias, payload inválido y extensiones futuras. El typecheck global no pudo completarse porque falta expo-secure-store en dos archivos preexistentes de sesión.",
+            "explanation": "Implementé el límite tipado entre DTO remoto y dominio en parseRemoteResource, documenté las respuestas y errores de los tres endpoints según el backend didáctico, y añadí casos deterministas para éxito, nulabilidad, malformación y compatibilidad futura. El payload null se conserva sin inventar datos de dominio."
+        }
+    ]
+}

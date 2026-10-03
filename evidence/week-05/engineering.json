@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "week": 5,
+  "commitSha": "5f5a291b40a7b9faed5f6dfda02102ae78a4434e",
+  "decision": "Mantener parseRemoteResource como límite de contrato del DTO remoto: validar la estructura del sobre y devolver únicamente los campos conocidos en ParseResult. La validación y conversión a Incident pertenecen a una etapa de dominio posterior; payload null se conserva como ausencia válida y nunca se reemplaza con datos inventados.",
+  "alternatives": [
+    "Validar sólo el sobre remoto en el parser tipado y dejar la interpretación de payload y la creación de Incident a la capa de dominio. Esto conserva payload null, permite ignorar extensiones futuras del sobre y separa errores de contrato de reglas de negocio.",
+    "Convertir directamente el DTO en Incident dentro del parser. Reduce pasos para el consumidor, pero mezcla transporte con dominio y presiona a fabricar valores o rechazar null aunque el contrato lo declare válido.",
+    "Confiar el DTO al tipo mediante una aserción sin validación. Tiene menor código inicial, pero permite que campos vacíos, versiones inválidas y payloads de tipos incorrectos entren a la aplicación sin un error de contrato controlado."
+  ],
+  "tradeoff": "La validación explícita agrega un límite pequeño y obliga a una etapa posterior para validar reglas de Incident. A cambio, preserva exactamente la semántica nullable del backend, produce errores contractuales deterministas y tolera campos futuros sin exponerlos como parte del resultado tipado.",
+  "requirementIds": [
+    "AC-02",
+    "AC-04"
+  ],
+  "verification": [
+    {
+      "command": "npm test -- --ci --runInBand course-tests/public/week-05.test.ts",
+      "result": "PASS: 1 suite y 16 tests aprobados.",
+      "evidence": "Los casos verifican DTO válido, payload objeto/null, ausencia de datos de dominio fabricados, id/status vacíos o de tipo incorrecto, versión de tipo incorrecto/negativa/fraccionaria, payload ausente/array/primitivo, sobre inválido y campo futuro ignorado."
+    },
+    {
+      "command": "npx eslint src/course-evaluation/index.ts course-tests/public/week-05.test.ts",
+      "result": "PASS: sin errores de lint.",
+      "evidence": "Lint focalizado de la implementación del parser y los tests añadidos."
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "BLOQUEADO por dependencia ausente: expo-secure-store.",
+      "evidence": "TypeScript reportó TS2307 en src/features/session/infrastructure/secureSessionStorage.ts y secureSessionStorage.test.ts; ambos archivos están fuera del cambio del contrato DTO."
+    }
+  ]
+}
