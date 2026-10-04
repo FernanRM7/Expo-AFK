@@ -47,6 +47,26 @@
             "command": "npm test -- --ci --runInBand course-tests/public/week-05.test.ts",
             "observedResult": "La suite pasó con 16 tests, cubriendo DTO objeto, payload null, campos vacíos y tipos incorrectos, versiones negativas/fraccionarias, payload inválido y extensiones futuras. El typecheck global no pudo completarse porque falta expo-secure-store en dos archivos preexistentes de sesión.",
             "explanation": "Implementé el límite tipado entre DTO remoto y dominio en parseRemoteResource, documenté las respuestas y errores de los tres endpoints según el backend didáctico, y añadí casos deterministas para éxito, nulabilidad, malformación y compatibilidad futura. El payload null se conserva sin inventar datos de dominio."
+        },
+        {
+            "studentId": "3523110657",
+            "commitShas": [
+                "775c9206d9dcca45bd84b7dfe4c8c39b476250dc"
+            ],
+            "files": [
+                "src/features/incidents/infrastructure/remoteIncidentRepository.ts",
+                "src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+                "src/features/incidents/domain/incidentRepository.ts"
+            ],
+            "tests": [
+                "npm test -- --ci --runInBand src/features/incidents/infrastructure/remoteIncidentRepository.test.ts — 1 suite y 5 tests pasaron.",
+                "npm run typecheck — pasó sin errores."
+            ],
+            "reviews": [],
+            "prediction": "Esperaba que lista, detalle y creación devolvieran resultados tipados, mapearan sólo campos de dominio validados y preservaran el payload null sin construir datos ficticios.",
+            "command": "npm test -- --ci --runInBand src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+            "observedResult": "Pasaron 5 pruebas: mapeo de lista, lista vacía, payload nulo válido, DTO malformado, detalle con ruta codificada, POST con cabeceras/body/claves estables y rechazo de clave corta sin llamada HTTP.",
+            "explanation": "Implementé RemoteIncidentRepository detrás del puerto, reutilicé el parser y fetchJson tipado, e inyecté actor, token sintético, URL, timeout y fetch. El mapeo omite title/createdAt ausentes y mantiene los campos extra del servidor fuera del modelo de pantalla."
         }
     ]
 }

@@ -1,28 +1,28 @@
 {
     "schemaVersion": 1,
     "week": 5,
-    "commitSha": "fb37e0cf2aa2db8d935befbce230e9244a6d7e49",
-    "generatedAt": "2026-10-02T13:54:00.000Z",
+    "commitSha": "775c9206d9dcca45bd84b7dfe4c8c39b476250dc",
+    "generatedAt": "2026-10-04T22:24:21Z",
     "checks": [
         {
             "id": "fetchjson-contract-invalid",
             "status": "pass",
             "scenarioType": "failure",
-            "command": "npx jest src/api/cloudClient.test.ts -t \"contract-invalid\"",
+                "command": "npm test -- --ci --runInBand src/api/cloudClient.test.ts",
             "evidence": "Con un payload que no cumple el contrato campo inesperado, sin id/status válidos, fetchJson devolvió { ok: false, reason: { kind: 'contract-invalid' } }. La telemetría enviada no contuvo el valor sensible del payload original."
         },
         {
             "id": "fetchjson-timeout",
             "status": "pass",
             "scenarioType": "failure",
-            "command": "npx jest src/api/cloudClient.test.ts -t \"timeout\"",
+                "command": "npm test -- --ci --runInBand src/api/cloudClient.test.ts",
             "evidence": "Con una respuesta que nunca resuelve y un timeout de 50ms, fetchJson abortó la petición y devolvió { ok: false, reason: { kind: 'timeout' } } sin lanzar una excepción sin controlar."
         },
         {
             "id": "fetchjson-server-error",
             "status": "pass",
             "scenarioType": "failure",
-            "command": "npx jest src/api/cloudClient.test.ts -t \"server-error\"",
+                "command": "npm test -- --ci --runInBand src/api/cloudClient.test.ts",
             "evidence": "Con una respuesta HTTP 500 cuyo cuerpo contenía datos sensibles sintéticos token, comentario, fetchJson devolvió { ok: false, reason: { kind: 'server-error', status: 500 } }. La telemetría enviada solo contuvo el status numérico, sin los valores sensibles del cuerpo."
         }
     ]
