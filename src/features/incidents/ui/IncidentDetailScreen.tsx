@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import type { Incident } from '../domain/incident';
-import type { IncidentRepository } from '../domain/incidentRepository';
+import type { IncidentRepository, IncidentSnapshot } from '../domain/incidentRepository';
 import { getIncidentDetail } from '../application/getIncidentDetail';
 
 type Props = Readonly<{
@@ -11,19 +10,21 @@ type Props = Readonly<{
 }>;
 
 export function IncidentDetailScreen({ repository, incidentId }: Props) {
-    const [incident, setIncident] = useState<Incident | null | undefined>(undefined);
+    const [result, setResult] = useState<
+        { ok: true; value: IncidentSnapshot | null } | { ok: false; reason: unknown } | undefined
+    >(undefined);
 
     useEffect(() => {
         let active = true;
         getIncidentDetail(repository, incidentId).then((result) => {
-            if (active) setIncident(result);
+            if (active) setResult(result);
         });
         return () => {
             active = false;
         };
     }, [repository, incidentId]);
 
-    if (incident === undefined) {
+    if (result === undefined) {
         return (
             <View style={styles.screen}>
                 <Text>Cargando…</Text>
@@ -31,7 +32,15 @@ export function IncidentDetailScreen({ repository, incidentId }: Props) {
         );
     }
 
-    if (incident === null) {
+    if (!result.ok) {
+        return (
+            <View style={styles.screen}>
+                <Text testID="incident-detail-error">No se pudo cargar la incidencia.</Text>
+            </View>
+        );
+    }
+
+    if (result.value === null) {
         return (
             <View style={styles.screen}>
                 <Text testID="incident-not-found">Incidencia no encontrada</Text>
@@ -39,9 +48,19 @@ export function IncidentDetailScreen({ repository, incidentId }: Props) {
         );
     }
 
+    const incident = result.value.incident;
+    if (incident === null) {
+        return (
+            <View style={styles.screen}>
+                <Text testID="incident-detail-empty">Detalles no disponibles</Text>
+                <Text testID="incident-detail-status">Estado: {result.value.status}</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.screen}>
-            <Text style={styles.title}>{incident.title}</Text>
+            {incident.title && <Text style={styles.title}>{incident.title}</Text>}
             <Text testID="incident-detail-status">Estado: {incident.status}</Text>
             <Text testID="incident-detail-category">Categoría: {incident.category}</Text>
             <Text>{incident.description}</Text>

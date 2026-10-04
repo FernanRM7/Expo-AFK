@@ -33,6 +33,12 @@ El sobre de una incidencia remota tiene esta forma:
 
 `payload: null` es una respuesta válida del escenario `nullable`. El parser conserva `null` literalmente. El consumidor no debe fabricar una categoría, ubicación u otros valores para construir un `Incident`; debe tratar la ausencia del payload de acuerdo con el estado de carga/dominio. Un payload objeto también sigue siendo DTO sin validar: la creación o actualización del modelo `Incident` requiere validación de dominio por separado. El tipo `Incident` no está declarado como tipo compuesto en `src/campusops/contracts.ts`; este límite no pretende inventar uno.
 
+## Proyección a la aplicación
+
+`RemoteIncidentRepository` valida los campos que CampusOps consume: categoría y estado publicados, descripción y ubicación no vacías, identidad de reportante y técnico asignado textual o nula. Después proyecta únicamente esos campos al modelo `Incident`; prioridad, notas, evidencia e historial no se copian al modelo de lista/detalle. La ubicación textual se representa como ubicación manual con la misma etiqueta. El backend no proporciona `title` ni `createdAt`, por lo que ambos son opcionales en `Incident` y el adaptador los deja ausentes.
+
+El puerto devuelve `FetchResult` para distinguir `{ ok: true, value }` de `contract-invalid`, `timeout` y `server-error`. Una lista vacía es `{ ok: true, value: [] }`. Un DTO con `payload: null` se conserva como snapshot con `incident: null`, su `id`, `version` y `status`; un 404 de detalle es una respuesta HTTP fallida, no un payload nulo. La UI no recibe ni interpreta el DTO directamente y presenta errores genéricos.
+
 ## Rutas
 
 ### `GET /v1/incidents`
@@ -98,6 +104,8 @@ Respuesta `201`:
 ```
 
 El campo `incident` es un DTO que el cliente extrae antes de pasarlo al parser del sobre. Repetir la misma clave y el mismo cuerpo devuelve `200` con el resultado previo y `duplicate: true`; reutilizar la clave con contenido diferente devuelve conflicto.
+
+El adaptador requiere una clave estable de al menos ocho caracteres, proporcionada por el llamador para que un reintento pueda reutilizarla. La URL base, el actor y el token de fixture se inyectan; por defecto la URL es `http://127.0.0.1:4310` (para emulador Android, configura el host documentado en `docs/CAMPUSOPS_API.md`). Las pruebas sustituyen `fetch` y no acceden a servicios externos.
 
 ## Errores y escenarios
 

@@ -2,12 +2,12 @@ import type { IncidentCategory, IncidentStatus, IncidentLocation } from '../../.
 
 export type Incident = Readonly<{
   id: string;
-  title: string;
+  title?: string;
   description: string;
   category: IncidentCategory;
   status: IncidentStatus;
   location: IncidentLocation;
   reporterId: string;
   assignedTechnicianId: string | null;
-  createdAt: string;
+  createdAt?: string;
 }>;
