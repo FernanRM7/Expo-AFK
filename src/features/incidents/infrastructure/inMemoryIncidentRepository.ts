@@ -1,5 +1,6 @@
 import type { Incident } from '../domain/incident';
-import type { IncidentRepository } from '../domain/incidentRepository';
+import type { IncidentRepository, IncidentSnapshot, CreateIncidentInput } from '../domain/incidentRepository';
+import type { FetchResult } from '../../../course-evaluation/contracts';
 
 /** Datos ficticios  para desarrollo y pruebas*/
 const SEED_INCIDENTS: readonly Incident[] = [
@@ -41,17 +42,64 @@ const SEED_INCIDENTS: readonly Incident[] = [
 /** Fake determinista de infraestructura */
 
 export class InMemoryIncidentRepository implements IncidentRepository {
-    private readonly incidents: readonly Incident[];
+    private readonly incidents: Incident[];
+    private readonly creations = new Map<string, { fingerprint: string; snapshot: IncidentSnapshot }>();
 
     constructor(seed: readonly Incident[] = SEED_INCIDENTS) {
-        this.incidents = seed;
+        this.incidents = [...seed];
     }
 
-    async list(): Promise<readonly Incident[]> {
-        return this.incidents;
+    async list(): Promise<FetchResult<readonly IncidentSnapshot[]>> {
+        return {
+            ok: true,
+            value: this.incidents.map((incident) => ({
+                id: incident.id,
+                version: null,
+                status: incident.status,
+                incident,
+            })),
+        };
     }
 
-    async getById(id: string): Promise<Incident | null> {
-        return this.incidents.find((incident) => incident.id === id) ?? null;
+    async getById(id: string): Promise<FetchResult<IncidentSnapshot | null>> {
+        const incident = this.incidents.find((item) => item.id === id);
+        return {
+            ok: true,
+            value: incident ? {
+                id: incident.id,
+                version: null,
+                status: incident.status,
+                incident,
+            } : null,
+        };
+    }
+
+    async create(
+        input: CreateIncidentInput,
+        idempotencyKey: string,
+    ): Promise<FetchResult<IncidentSnapshot>> {
+        const fingerprint = JSON.stringify(input);
+        const previous = this.creations.get(idempotencyKey);
+        if (previous) {
+            return previous.fingerprint === fingerprint
+                ? { ok: true, value: previous.snapshot }
+                : { ok: false, reason: { kind: 'contract-invalid' } };
+        }
+        const incident: Incident = {
+            id: `local-incident-${this.incidents.length + 1}`,
+            description: input.description,
+            category: input.category,
+            status: 'open',
+            location: { source: 'manual', label: input.location },
+            reporterId: 'local-reporter',
+            assignedTechnicianId: null,
+        };
+        this.incidents.push(incident);
+        const snapshot = { id: incident.id, version: null, status: incident.status, incident };
+        this.creations.set(idempotencyKey, { fingerprint, snapshot });
+        return {
+            ok: true,
+            value: snapshot,
+        };
     }
 }
