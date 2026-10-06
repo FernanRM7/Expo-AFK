@@ -3,9 +3,15 @@ import { StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { getBackendHealth } from './src/api/courseBackend';
+import {
+  getSessionLifecycleState,
+  subscribeToSessionLifecycle,
+  type SessionLifecycleState,
+} from './src/features/session/application/sessionLifecycle';
 
 export default function App() {
   const [status, setStatus] = useState<'checking' | 'available' | 'offline'>('checking');
+  const [sessionState, setSessionState] = useState<SessionLifecycleState>(getSessionLifecycleState);
 
   useEffect(() => {
     let active = true;
@@ -16,6 +22,20 @@ export default function App() {
       active = false;
     };
   }, []);
+
+  useEffect(() => subscribeToSessionLifecycle(setSessionState), []);
+
+  if (sessionState === 'expired') {
+    return (
+      <View style={styles.screen}>
+        <View accessibilityRole="summary" style={styles.card}>
+          <Text style={styles.title}>Iniciar sesión</Text>
+          <Text testID="session-expired">La sesión expiró. Inicia sesión de nuevo para continuar.</Text>
+        </View>
+        <StatusBar style="auto" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>

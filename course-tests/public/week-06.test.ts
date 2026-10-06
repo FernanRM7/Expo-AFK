@@ -19,3 +19,16 @@ test('coalesces concurrent 401s into one refresh and retries each request once',
 test('logout removes persisted session state', () => {
   expect(coordinateRefresh([{ type: 'logout' }]).persistedToken).toBeNull();
 });
+
+test('a failed refresh does not report waiting requests as retried', () => {
+  expect(coordinateRefresh([
+    { type: 'request401', requestId: 'expired-request', generation: 0 },
+    { type: 'refreshFailed', generation: 0 },
+  ])).toEqual({
+    status: 'anonymous',
+    activeGeneration: null,
+    refreshCalls: 1,
+    retriedRequestIds: [],
+    persistedToken: null,
+  });
+});
