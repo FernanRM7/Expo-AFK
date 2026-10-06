@@ -1,7 +1,8 @@
 import type { IncidentCategory, IncidentStatus } from '../../../campusops/contracts';
 import { parseRemoteResource } from '../../../course-evaluation';
 import type { FetchResult, ParseResult } from '../../../course-evaluation/contracts';
-import { fetchJson } from '../../../api/cloudClient';
+import { fetchJsonWithSessionRefresh } from '../../../api/cloudClient';
+import type { SessionTokenStore } from '../../session/infrastructure/secureSessionStorage';
 import type {
     CreateIncidentInput,
     IncidentRepository,
@@ -13,6 +14,17 @@ const CATEGORIES = new Set<IncidentCategory>([
 ]);
 const STATUSES = new Set<IncidentStatus>(['open', 'assigned', 'in_progress', 'resolved', 'closed']);
 const DEFAULT_BASE_URL = 'http://127.0.0.1:4310';
+const lazySessionTokenStore: SessionTokenStore = {
+    async readSessionTokens() {
+        return (await import('../../session/infrastructure/secureSessionStorage')).readSessionTokens();
+    },
+    async saveSessionTokens(tokens) {
+        return (await import('../../session/infrastructure/secureSessionStorage')).saveSessionTokens(tokens);
+    },
+    async deleteSessionTokens() {
+        return (await import('../../session/infrastructure/secureSessionStorage')).deleteSessionTokens();
+    },
+};
 
 export type CourseActorId =
     | 'reporter-1'
@@ -27,6 +39,7 @@ export type RemoteIncidentRepositoryOptions = Readonly<{
     baseUrl?: string;
     timeoutMs?: number;
     fetchImpl?: typeof fetch;
+    sessionTokenStore?: SessionTokenStore;
 }>;
 
 type RemoteIncidentDto = Extract<ParseResult, { ok: true }>['value'];
@@ -104,6 +117,7 @@ export class RemoteIncidentRepository implements IncidentRepository {
     private readonly headers: Readonly<Record<string, string>>;
     private readonly timeoutMs: number;
     private readonly fetchImpl: typeof fetch;
+    private readonly sessionTokenStore: SessionTokenStore;
 
     constructor(options: RemoteIncidentRepositoryOptions) {
         this.baseUrl = (options.baseUrl ?? process.env.EXPO_PUBLIC_COURSE_BACKEND_URL ?? DEFAULT_BASE_URL)
@@ -115,26 +129,29 @@ export class RemoteIncidentRepository implements IncidentRepository {
         };
         this.timeoutMs = options.timeoutMs ?? 5000;
         this.fetchImpl = options.fetchImpl ?? fetch;
+        this.sessionTokenStore = options.sessionTokenStore ?? lazySessionTokenStore;
     }
 
     async list(): Promise<FetchResult<readonly IncidentSnapshot[]>> {
-        const result = await fetchJson(
+        const result = await fetchJsonWithSessionRefresh(
             `${this.baseUrl}/v1/incidents`,
             isIncidentList,
             this.timeoutMs,
             { headers: this.headers },
             this.fetchImpl,
+            { baseUrl: this.baseUrl, tokenStore: this.sessionTokenStore },
         );
         return mapResult(result, (body) => body.items.map(toSnapshot));
     }
 
     async getById(id: string): Promise<FetchResult<IncidentSnapshot | null>> {
-        const result = await fetchJson(
+        const result = await fetchJsonWithSessionRefresh(
             `${this.baseUrl}/v1/incidents/${encodeURIComponent(id)}`,
             isIncident,
             this.timeoutMs,
             { headers: this.headers },
             this.fetchImpl,
+            { baseUrl: this.baseUrl, tokenStore: this.sessionTokenStore },
         );
         return mapResult(result, toSnapshot);
     }
@@ -146,7 +163,7 @@ export class RemoteIncidentRepository implements IncidentRepository {
         if (idempotencyKey.trim().length < 8) {
             return { ok: false, reason: { kind: 'contract-invalid' } };
         }
-        const result = await fetchJson(
+        const result = await fetchJsonWithSessionRefresh(
             `${this.baseUrl}/v1/incidents`,
             isCreateIncidentResponse,
             this.timeoutMs,
@@ -160,6 +177,7 @@ export class RemoteIncidentRepository implements IncidentRepository {
                 body: JSON.stringify(input),
             },
             this.fetchImpl,
+            { baseUrl: this.baseUrl, tokenStore: this.sessionTokenStore },
         );
         return mapResult(result, (body) => toSnapshot(body.incident));
     }

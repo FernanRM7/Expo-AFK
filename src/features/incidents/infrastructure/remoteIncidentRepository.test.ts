@@ -26,6 +26,14 @@ function repository(fetchImpl: typeof fetch) {
         actorId: 'reporter-1',
         accessToken: 'course-valid-token',
         fetchImpl,
+        sessionTokenStore: {
+            readSessionTokens: async () => ({
+                accessToken: 'course-valid-token',
+                refreshToken: 'course-refresh-token',
+            }),
+            saveSessionTokens: async () => undefined,
+            deleteSessionTokens: async () => undefined,
+        },
     });
 }
 
@@ -53,13 +61,12 @@ test('list maps remote DTOs to application snapshots and sends only contract hea
             },
         }],
     });
-    expect(fetchImpl).toHaveBeenCalledWith('http://127.0.0.1:4310/v1/incidents', expect.objectContaining({
-        headers: {
-            Accept: 'application/json',
-            Authorization: 'Bearer course-valid-token',
-            'X-Course-Actor': 'reporter-1',
-        },
-    }));
+    const [listUrl, listRequest] = fetchImpl.mock.calls[0] as Parameters<typeof fetch>;
+    const listHeaders = new Headers((listRequest as RequestInit).headers);
+    expect(listUrl).toBe('http://127.0.0.1:4310/v1/incidents');
+    expect(listHeaders.get('Accept')).toBe('application/json');
+    expect(listHeaders.get('Authorization')).toBe('Bearer course-valid-token');
+    expect(listHeaders.get('X-Course-Actor')).toBe('reporter-1');
     const serializedModel = JSON.stringify(result);
     expect(serializedModel).not.toContain('priority');
     expect(serializedModel).not.toContain('nota interna');
@@ -89,10 +96,9 @@ test('detail uses an encoded resource id and preserves nullable payload as valid
         ok: true,
         value: { id: 'campus-inc-001', version: 3, status: 'assigned', incident: null },
     });
-    expect(fetchImpl).toHaveBeenCalledWith(
-        'http://127.0.0.1:4310/v1/incidents/campus%2Finc%20001',
-        expect.objectContaining({ headers: expect.objectContaining({ 'X-Course-Actor': 'reporter-1' }) }),
-    );
+    const [detailUrl, detailRequest] = fetchImpl.mock.calls[0] as Parameters<typeof fetch>;
+    expect(detailUrl).toBe('http://127.0.0.1:4310/v1/incidents/campus%2Finc%20001');
+    expect(new Headers((detailRequest as RequestInit).headers).get('X-Course-Actor')).toBe('reporter-1');
 });
 
 test('create sends the exact DTO and caller-stable idempotency key, then maps only known fields', async () => {
@@ -126,17 +132,17 @@ test('create sends the exact DTO and caller-stable idempotency key, then maps on
             },
         },
     });
-    expect(fetchImpl).toHaveBeenCalledWith('http://127.0.0.1:4310/v1/incidents', expect.objectContaining({
-        method: 'POST',
-        headers: {
-            Accept: 'application/json',
-            Authorization: 'Bearer course-valid-token',
-            'X-Course-Actor': 'reporter-1',
-            'Content-Type': 'application/json',
-            'Idempotency-Key': 'create-operation-01',
-        },
-        body: JSON.stringify(input),
-    }));
+    const [createUrl, createRequest] = fetchImpl.mock.calls[0] as Parameters<typeof fetch>;
+    const createInit = createRequest as RequestInit;
+    const createHeaders = new Headers(createInit.headers);
+    expect(createUrl).toBe('http://127.0.0.1:4310/v1/incidents');
+    expect(createInit.method).toBe('POST');
+    expect(createHeaders.get('Accept')).toBe('application/json');
+    expect(createHeaders.get('Authorization')).toBe('Bearer course-valid-token');
+    expect(createHeaders.get('X-Course-Actor')).toBe('reporter-1');
+    expect(createHeaders.get('Content-Type')).toBe('application/json');
+    expect(createHeaders.get('Idempotency-Key')).toBe('create-operation-01');
+    expect(createInit.body).toBe(JSON.stringify(input));
 });
 
 test('create refuses a short idempotency key without sending a request', async () => {
