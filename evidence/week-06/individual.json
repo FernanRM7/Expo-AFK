@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "week": 6,
+  "teamId": "9B-E11",
+  "members": [
+    {
+      "studentId": "3523110409",
+      "commitShas": [
+        "453b9f6c75653ce52303483da6f4232e7a1b5417"
+      ],
+      "files": [
+        "App.tsx",
+        "course-tests/public/week-06.test.ts",
+        "course-tests/smoke.test.tsx",
+        "docs/session-state-machine.mmd",
+        "session-flow.md",
+        "src/course-evaluation/index.ts",
+        "src/features/session/application/sessionLifecycle.ts",
+        "src/features/session/application/sessionLifecycle.test.ts",
+        "src/features/session/application/sessionService.ts",
+        "src/features/session/application/sessionService.test.ts",
+        "src/features/session/infrastructure/secureSessionStorage.ts",
+        "src/features/session/infrastructure/secureSessionStorage.test.ts"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx — 5 suites y 18 tests aprobados.",
+        "npx eslint App.tsx course-tests/public/week-06.test.ts course-tests/smoke.test.tsx src/course-evaluation/index.ts src/features/session/application/sessionLifecycle.ts src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.ts src/features/session/infrastructure/secureSessionStorage.test.ts --rule import/namespace: off --rule import/no-unresolved: off --rule import/no-duplicates: off — pasó sin errores.",
+        "git diff --check sobre los archivos propios — pasó sin errores."
+      ],
+      "reviews": [],
+      "prediction": "Esperaba que el ciclo de sesión sólo aceptara transiciones válidas, guardara el par de tokens con SecureStore al iniciar, eliminara ambos al cerrar o fallar el refresh y compartiera una sola petición de renovación concurrente.",
+      "command": "npm test -- --ci --runInBand src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx",
+      "observedResult": "PASS: 5 suites y 18 tests aprobados. Los tests cubrieron transiciones de login/expiración/refresh/logout, login válido y rechazado, refresh válido y fallido, coalescencia de refresh, borrado verificable del par persistido, ausencia de secretos en telemetría y controles de login/logout en App.",
+      "explanation": "Implementé el servicio de sesión con login, renovación compartida y logout; almacené access y refresh tokens únicamente en SecureStore; modelé estados/transiciones explícitos y conecté la UI. Añadí pruebas deterministas y el diagrama Mermaid. La contribución está en el commit propio 453b9f6c75653ce52303483da6f4232e7a1b5417."
+    }
+  ]
+}
