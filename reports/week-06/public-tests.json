@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "week": 6,
   "mode": "public",
-  "commitSha": "7710fb1fd153aadbc1478b065f9083a522559b16",
-  "evaluatedAt": "2026-10-11T16:55:04.375243+00:00",
+  "commitSha": "b7339cbcb32692d5abfa9b67121915c0c6943e0c",
+  "evaluatedAt": "2026-10-11T17:07:31.455228+00:00",
   "status": "pass",
   "checks": [
     {
@@ -74,7 +74,7 @@
     {
       "id": "toolchain_4",
       "status": "pass",
-      "detail": "npm test -- --ci --runInBand course-tests/public/week-06.test.ts\n> dmi-react-native-starter@1.0.0 test\n> jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/public/week-06.test.ts\n\n\nPASS course-tests/public/week-06.test.ts\n  ✓ coalesces concurrent 401s into one refresh and retries each request once (1 ms)\n  ✓ logout removes persisted session state (1 ms)\n  ✓ a failed refresh clears pending retries and returns to anonymous\n  ✓ an obsolete refresh failure cannot erase a newer authenticated generation\n\nTest Suites: 1 passed, 1 total\nTests:       4 passed, 4 total\nSnapshots:   0 total\nTime:        0.19 s, estimated 1 s\nRan all test suites matching /course-tests\\/public\\/week-06.test.ts/i."
+      "detail": "npm test -- --ci --runInBand course-tests/public/week-06.test.ts\n> dmi-react-native-starter@1.0.0 test\n> jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/public/week-06.test.ts\n\n\nPASS course-tests/public/week-06.test.ts\n  ✓ coalesces concurrent 401s into one refresh and retries each request once (2 ms)\n  ✓ logout removes persisted session state\n  ✓ a failed refresh clears pending retries and returns to anonymous\n  ✓ an obsolete refresh failure cannot erase a newer authenticated generation\n\nTest Suites: 1 passed, 1 total\nTests:       4 passed, 4 total\nSnapshots:   0 total\nTime:        0.516 s\nRan all test suites matching /course-tests\\/public\\/week-06.test.ts/i."
     }
   ]
 }
