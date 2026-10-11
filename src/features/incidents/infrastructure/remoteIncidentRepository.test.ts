@@ -261,3 +261,38 @@ test('technicians cannot invoke an incident action unless assigned; coordination
         }),
     );
 });
+
+test('a second 401 after refresh is returned without starting another refresh cycle', async () => {
+    let stored: { accessToken: string; refreshToken: string } | null = {
+        accessToken: 'synthetic-old-access',
+        refreshToken: 'synthetic-refresh',
+    };
+    const tokenStore = {
+        readSessionTokens: jest.fn(async () => stored),
+        saveSessionTokens: jest.fn(async (tokens: { accessToken: string; refreshToken: string }) => { stored = tokens; }),
+        deleteSessionTokens: jest.fn(async () => { stored = null; }),
+    };
+    transitionSessionLifecycle('login-started');
+    transitionSessionLifecycle('login-succeeded');
+    const fetchImpl = jest.fn<Promise<Response>, Parameters<typeof fetch>>().mockImplementation(async (input) => {
+        if (String(input).endsWith('/v1/session/refresh')) {
+            return response({
+                accessToken: 'synthetic-new-access',
+                refreshToken: 'synthetic-new-refresh',
+                expiresIn: 60,
+            });
+        }
+        return response({ code: 'still-expired' }, 401);
+    });
+    const session = createSessionService({ fetchImpl: fetchImpl as typeof fetch, tokenStore });
+    const client = new RemoteIncidentRepository({
+        baseUrl: 'http://127.0.0.1:4310',
+        actorId: 'reporter-1',
+        session,
+        fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    await expect(client.list()).resolves.toEqual({ ok: false, reason: { kind: 'server-error', status: 401 } });
+    expect(fetchImpl.mock.calls.filter(([url]) => String(url).endsWith('/v1/session/refresh'))).toHaveLength(1);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+});
