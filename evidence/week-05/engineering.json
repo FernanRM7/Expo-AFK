@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "week": 5,
+  "commitSha": "775c9206d9dcca45bd84b7dfe4c8c39b476250dc",
+  "decision": "Mantener dos límites explícitos: parseRemoteResource valida el sobre remoto y RemoteIncidentRepository valida el payload de dominio antes de proyectarlo a IncidentSnapshot. FetchResult conserva contract-invalid, timeout y server-error; un payload nulo se representa como snapshot sin Incident y no se fabrican title ni createdAt que el backend no envía.",
+  "alternatives": [
+    "Validar sólo el sobre remoto en el parser tipado y dejar la interpretación de payload y la creación de Incident a la capa de dominio. Esto conserva payload null, permite ignorar extensiones futuras del sobre y separa errores de contrato de reglas de negocio.",
+    "Convertir directamente el DTO en Incident dentro del parser. Reduce pasos para el consumidor, pero mezcla transporte con dominio y presiona a fabricar valores o rechazar null aunque el contrato lo declare válido.",
+    "Confiar el DTO al tipo mediante una aserción sin validación. Tiene menor código inicial, pero permite que campos vacíos, versiones inválidas y payloads de tipos incorrectos entren a la aplicación sin un error de contrato controlado.",
+    "Validar y convertir el DTO directamente en cada pantalla. Reduce el adaptador inicial, pero duplica reglas, mezcla transporte con UI y vuelve difícil probar solicitudes sin montar componentes."
+  ],
+  "tradeoff": "La validación explícita y los snapshots agregan un tipo de resultado y una etapa de mapeo. A cambio, separan DTO y dominio, preservan el vacío válido y los errores diferenciados, evitan valores inventados y permiten sustituir fetch en pruebas; las credenciales/actor siguen siendo responsabilidad de la sesión que se implementará en Week 06.",
+  "requirementIds": [
+    "AC-02",
+    "AC-04"
+  ],
+  "verification": [
+    {
+      "command": "npm test -- --ci --runInBand course-tests/public/week-05.test.ts",
+      "result": "PASS: 1 suite y 16 tests aprobados.",
+      "evidence": "Los casos verifican DTO válido, payload objeto/null, ausencia de datos de dominio fabricados, id/status vacíos o de tipo incorrecto, versión de tipo incorrecto/negativa/fraccionaria, payload ausente/array/primitivo, sobre inválido y campo futuro ignorado."
+    },
+    {
+      "command": "npx eslint src/course-evaluation/index.ts course-tests/public/week-05.test.ts",
+      "result": "PASS: sin errores de lint.",
+      "evidence": "Lint focalizado de la implementación del parser y los tests añadidos."
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS: sin errores de TypeScript.",
+      "evidence": "Se excluyó la copia de referencia del ZIP Week 05 de tsconfig para que el compilador compruebe el código del proyecto raíz, no sus pruebas duplicadas con imports relativos al paquete."
+    },
+    {
+      "command": "npm test -- --ci --runInBand src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+      "result": "PASS: 1 suite y 5 tests aprobados.",
+      "evidence": "Se probaron list, detalle, creación, mapeo de campos, payload nulo, DTO de dominio malformado, headers/body, clave idempotente y rechazo de clave corta usando fetch sustituible."
+    },
+    {
+      "command": "npm run backend:self-test",
+      "result": "PASS: Controlled backend self-test passed.",
+      "evidence": "El backend local confirmó roles, conflicto de reasignación, respuesta perdida, idempotencia, evidencia y geocodificación con datos sintéticos."
+    },
+    {
+      "command": "make feedback",
+      "result": "PASS: exit code 0; typecheck, lint, smoke, audit al umbral crítico y export Android completados.",
+      "evidence": "Expo exportó el bundle Android. npm audit informó 27 vulnerabilidades altas transitivas pero ninguna crítica; el umbral configurado es critical y el comando pasó."
+    },
+    {
+      "command": "make verify-week-05",
+      "result": "PASS: exit code 0; todos los checks pasaron.",
+      "evidence": "Typecheck, lint, audit al umbral crítico, smoke y backend self-test pasaron; el reporte evaluó el commit de código 775c9206d9dcca45bd84b7dfe4c8c39b476250dc."
+    },
+    {
+      "command": "make public-test-week-05",
+      "result": "PASS: exit code 0; pruebas públicas y schemas de evidencia pasaron.",
+      "evidence": "La suite pública tuvo 16 pruebas aprobadas; validó contrato-tests, failure-matrix, engineering e individual con tres integrantes y SHA del commit de código."
+    }
+  ]
+}

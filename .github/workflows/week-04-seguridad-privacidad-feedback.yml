@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   evaluate:
+    if: github.ref == 'refs/tags/week-04-final'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

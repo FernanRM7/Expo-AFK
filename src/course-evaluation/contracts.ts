@@ -16,3 +16,12 @@ export type SyncRecord = Readonly<{ id: string; version: number; fields: JsonObj
 export type RemoteResponse = Readonly<{ requestId: string; value?: unknown; error?: string }>;
 
 export type PermissionEvent = 'granted' | 'paused' | 'revoked' | 'resumed' | 'denied_permanently';
+
+export type FetchErrorReason =
+  | Readonly<{ kind: 'contract-invalid' }>
+  | Readonly<{ kind: 'timeout' }>
+  | Readonly<{ kind: 'server-error'; status: number }>;
+
+export type FetchResult<T> =
+  | Readonly<{ ok: true; value: T }>
+  | Readonly<{ ok: false; reason: FetchErrorReason }>;

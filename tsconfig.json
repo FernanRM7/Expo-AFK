@@ -14,6 +14,7 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "week-04-seguridad-privacidad/**"
+    "week-04-seguridad-privacidad/**",
+    "week-05-cliente-cloud/**"
   ]
 }

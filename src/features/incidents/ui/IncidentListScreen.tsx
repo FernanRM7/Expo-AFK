@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { Incident } from '../domain/incident';
-import type { IncidentRepository } from '../domain/incidentRepository';
+import type { IncidentRepository, IncidentSnapshot } from '../domain/incidentRepository';
 import { listIncidents } from '../application/listIncidents';
 
 type Props = Readonly<{
@@ -11,12 +10,14 @@ type Props = Readonly<{
 }>;
 
 export function IncidentListScreen({ repository, onSelectIncident }: Props) {
-    const [incidents, setIncidents] = useState<readonly Incident[]>([]);
+    const [result, setResult] = useState<
+        { ok: true; value: readonly IncidentSnapshot[] } | { ok: false; reason: unknown } | undefined
+    >(undefined);
 
     useEffect(() => {
         let active = true;
         listIncidents(repository).then((result) => {
-            if (active) setIncidents(result);
+            if (active) setResult(result);
         });
         return () => {
             active = false;
@@ -26,8 +27,10 @@ export function IncidentListScreen({ repository, onSelectIncident }: Props) {
     return (
         <View style={styles.screen}>
             <Text style={styles.title}>Incidencias</Text>
+            {result && !result.ok && <Text testID="incident-list-error">No se pudieron cargar las incidencias.</Text>}
+            {result?.ok && result.value.length === 0 && <Text testID="incident-list-empty">No hay incidencias.</Text>}
             <FlatList
-                data={incidents}
+                data={result?.ok ? result.value : []}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <Pressable
@@ -35,7 +38,9 @@ export function IncidentListScreen({ repository, onSelectIncident }: Props) {
                         style={styles.row}
                         onPress={() => onSelectIncident(item.id)}
                     >
-                        <Text style={styles.rowTitle}>{item.title}</Text>
+                        <Text style={styles.rowTitle}>
+                            {item.incident?.title ?? item.incident?.description ?? 'Detalles no disponibles'}
+                        </Text>
                         <Text testID={`incident-status-${item.id}`}>{item.status}</Text>
                     </Pressable>
                 )}

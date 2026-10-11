@@ -1,7 +1,9 @@
-import type { Incident } from '../domain/incident';
-import type { IncidentRepository } from '../domain/incidentRepository';
+import type { FetchResult } from '../../../course-evaluation/contracts';
+import type { IncidentRepository, IncidentSnapshot } from '../domain/incidentRepository';
 
 /**Caso de uso: obtener la lista de incidencias. */
-export async function listIncidents(repository: IncidentRepository): Promise<readonly Incident[]> {
+export async function listIncidents(
+    repository: IncidentRepository,
+): Promise<FetchResult<readonly IncidentSnapshot[]>> {
   return repository.list();
 }

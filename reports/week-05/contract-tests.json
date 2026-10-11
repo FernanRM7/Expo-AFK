@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "week": 5,
+  "commitSha": "775c9206d9dcca45bd84b7dfe4c8c39b476250dc",
+  "generatedAt": "2026-10-04T22:24:21Z",
+  "checks": [
+    {
+      "id": "remote-list-detail-create-mapping",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+      "evidence": "1 suite, 5 tests pasaron. Se verificó la lista vacía, mapeo DTO→snapshot, detalle con payload null, rechazo de campos de dominio inválidos, rutas/cabeceras de lista y detalle, POST con body y clave de idempotencia estables, y rechazo local de claves cortas sin solicitud HTTP."
+    },
+    {
+      "id": "nullable-payload-and-empty-boundary",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+      "evidence": "La respuesta items: [] permaneció como lista vacía válida. Un recurso con payload: null permaneció como snapshot válido con id/version/status e incident: null; no se generó un Incident sintético. Un payload objeto con categoría inválida devolvió contract-invalid."
+    },
+    {
+      "id": "typed-error-paths-and-redaction",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand src/api/cloudClient.test.ts",
+      "evidence": "1 suite, 3 tests pasaron para contract-invalid, timeout y HTTP 500. Se verificó que el resultado y la telemetría no incluyeran valores sensibles del body; timeout y HTTP se devolvieron como errores tipados sin excepción sin controlar."
+    },
+    {
+      "id": "controlled-backend-contracts",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run backend:self-test",
+      "evidence": "El self-test local del backend pasó: roles, conflicto de reasignación, respuesta perdida, idempotencia, evidencia y geocodificación. No usó Internet público."
+    }
+  ]
+}
