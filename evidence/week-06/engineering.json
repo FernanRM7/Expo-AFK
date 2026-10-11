@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "week": 6,
+  "commitSha": "7710fb1fd153aadbc1478b065f9083a522559b16",
+  "decision": "El servicio de sesión es dueño de la generación, expiración y única promesa de refresh. Las solicitudes de incidencias obtienen el token vigente desde ese servicio; ante 401 entregan el token observado para distinguir una renovación ya completada, comparten el refresh pendiente y reintentan una sola vez. Logout invalida la generación, espera el refresh en vuelo y elimina el par de SecureStore. Las acciones mutables pasan por autorización local antes del HTTP y el backend conserva la autoridad final.",
+  "alternatives": [
+    "Renovar de forma independiente desde cada solicitud 401; es simple por llamada, pero produce refresh duplicados, carreras con rotación de tokens y cierres de sesión falsos.",
+    "Usar una cola global de solicitudes autenticadas que serialice todas las operaciones; centraliza control, pero añade latencia y estado compartido innecesario para solicitudes que no necesitan renovar.",
+    "Compartir una sola promesa de refresh por servicio de sesión y limitar a un reintento por solicitud; coordina sólo cuando hace falta y conserva fallos tipados."
+  ],
+  "tradeoff": "Single-flight reduce llamadas de red, carreras y consumo, y junto al control de generación evita que respuestas obsoletas repongan una sesión cerrada. Mantiene estado en memoria y añade una segunda petición en el caso de 401; tras reiniciar la app, la primera solicitud puede depender del 401 del servidor porque expiresAt no se persiste.",
+  "requirementIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05"],
+  "verification": [
+    {
+      "command": "make feedback",
+      "result": "pass",
+      "evidence": "Typecheck, ESLint, smoke tests, audit configurado y export Android terminaron con exit 0. npm audit reportó vulnerabilidades altas de desarrollo, sin hallazgos críticos después de actualización no disruptiva del lockfile."
+    },
+    {
+      "command": "make verify-week-06",
+      "result": "pass",
+      "evidence": "El reporte del SHA 7710fb1fd153aadbc1478b065f9083a522559b16 pasó archivos base, perfil RN, scripts, integridad de workflow, escaneo sin secretos, typecheck, lint, audit con umbral crítico, smoke y backend:self-test."
+    },
+    {
+      "command": "make public-test-week-06",
+      "result": "pass",
+      "evidence": "La prueba pública pasó con los reportes congelados contra el SHA de código; validó los controles de auth, concurrencia y los tres registros individuales."
+    },
+    {
+      "command": "npm test -- --ci --runInBand src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts src/features/incidents/application/authorizeOperation.test.ts src/features/incidents/infrastructure/remoteIncidentRepository.test.ts src/api/cloudClient.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx",
+      "result": "pass",
+      "evidence": "Las ocho suites dirigidas pasaron; después la prueba focal del repositorio pasó sus ocho casos, incluido refresh single-flight y 401 posterior al único reintento."
+    }
+  ]
+}
