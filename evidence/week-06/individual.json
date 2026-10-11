@@ -32,6 +32,28 @@
       "command": "npm test -- --ci --runInBand src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx",
       "observedResult": "PASS: 5 suites y 18 tests aprobados. Los tests cubrieron transiciones de login/expiración/refresh/logout, login válido y rechazado, refresh válido y fallido, coalescencia de refresh, borrado verificable del par persistido, ausencia de secretos en telemetría y controles de login/logout en App.",
       "explanation": "Implementé el servicio de sesión con login, renovación compartida y logout; almacené access y refresh tokens únicamente en SecureStore; modelé estados/transiciones explícitos y conecté la UI. Añadí pruebas deterministas y el diagrama Mermaid. La contribución está en el commit propio 453b9f6c75653ce52303483da6f4232e7a1b5417."
+    },
+    {
+      "studentId": "3523110016",
+      "commitShas": [
+        "f0496c3eafbdaf6c52aad07d11003a9cfdd8529d"
+      ],
+      "files": [
+        "src/features/incidents/application/authorizeOperation.ts",
+        "src/features/incidents/application/authorizeOperation.test.ts",
+        "docs/session-authorization.md",
+        "reports/week-06/auth-tests.json"
+      ],
+      "tests": [
+        "npx jest src/features/incidents/application/authorizeOperation.test.ts --verbose — 1 suite y 8 tests aprobados."
+      ],
+      "reviews": [
+        "Contraste de las reglas de authorizeOperation con las del backend didáctico (course-backend/campusops.mjs): coordinación para assign/prioritize/close/reopen, técnico solo start/resolve sobre incidencias asignadas, reportante solo sus incidencias."
+      ],
+      "prediction": "Esperaba que cada rol solo pudiera ejecutar sus operaciones, que un técnico no asignado y otro reportante fueran rechazados, y que el rechazo no expusiera datos de la incidencia.",
+      "command": "npx jest src/features/incidents/application/authorizeOperation.test.ts --verbose",
+      "observedResult": "PASS: 1 suite y 8 tests aprobados, con casos permitidos y denegados por rol y asignación.",
+      "explanation": "Implementé authorizeOperation, una función pura en la capa application que valida permisos por perfil y asignación, con rechazo genérico 'forbidden'. Añadí pruebas deterministas sin red y documenté en docs/session-authorization.md que el selector de actor del backend es solo una ayuda de prueba. Aún no está conectada a un flujo de operaciones real, porque el repositorio actual no tiene start/resolve/close/reopen."
     }
   ]
 }

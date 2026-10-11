@@ -1,0 +1,43 @@
+{
+    "schemaVersion": 1,
+    "week": 6,
+    "commitSha": "f0496c3eafbdaf6c52aad07d11003a9cfdd8529d",
+    "generatedAt": "2026-10-11T05:01:00.000Z",
+    "checks": [
+        {
+            "id": "reporter-views-own-incident",
+            "status": "pass",
+            "scenarioType": "nominal",
+            "command": "npx jest src/features/incidents/application/authorizeOperation.test.ts --verbose",
+            "evidence": "Test 'reportante consulta solo sus incidencias': reporter-1 puede ver su incidencia (allowed: true) y reporter-2 recibe { allowed: false, code: 'forbidden' }."
+        },
+        {
+            "id": "technician-resolves-only-assigned",
+            "status": "pass",
+            "scenarioType": "boundary",
+            "command": "npx jest src/features/incidents/application/authorizeOperation.test.ts --verbose",
+            "evidence": "Tests de resolve y start: technician-1 (asignado) es autorizado y technician-2 (no asignado) es rechazado con 'forbidden'."
+        },
+        {
+            "id": "coordinator-closes-and-reopens",
+            "status": "pass",
+            "scenarioType": "nominal",
+            "command": "npx jest src/features/incidents/application/authorizeOperation.test.ts --verbose",
+            "evidence": "Tests de coordinación: coordinator-1 es autorizado para close, reopen, assign y prioritize."
+        },
+        {
+            "id": "reporter-and-technician-denied-close-reopen",
+            "status": "pass",
+            "scenarioType": "failure",
+            "command": "npx jest src/features/incidents/application/authorizeOperation.test.ts --verbose",
+            "evidence": "Reportante y técnico reciben 'forbidden' en close y reopen; un reportante tampoco puede resolver su propia incidencia."
+        },
+        {
+            "id": "denial-does-not-leak-incident-data",
+            "status": "pass",
+            "scenarioType": "failure",
+            "command": "npx jest src/features/incidents/application/authorizeOperation.test.ts --verbose",
+            "evidence": "El resultado de rechazo serializado no contiene reporter-1 ni technician-1. Suite completa: 1 suite, 8 tests aprobados."
+        }
+    ]
+}
