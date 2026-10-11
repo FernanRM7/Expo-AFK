@@ -3,6 +3,11 @@ import { reportCampusOpsError } from '../telemetry/safeTelemetry';
 
 const TIEMPO_LIMITE_MS = 5000;
 
+export type SessionRequestCoordinator = Readonly<{
+    getAccessToken(): Promise<FetchResult<string>>;
+    refreshAfterUnauthorized(observedAccessToken: string): Promise<FetchResult<string>>;
+}>;
+
 export async function fetchJson<T>(
     url: string,
     validar: (payload: unknown) => payload is T,
@@ -46,4 +51,29 @@ export async function fetchJson<T>(
     } finally {
         clearTimeout(idTiempoLimite);
     }
+}
+
+/** Makes one authenticated request and shares session refresh after a 401. */
+export async function fetchJsonWithSession<T>(
+    url: string,
+    validar: (payload: unknown) => payload is T,
+    timeoutMs: number,
+    request: RequestInit,
+    fetchImpl: typeof fetch,
+    session: SessionRequestCoordinator,
+): Promise<FetchResult<T>> {
+    const access = await session.getAccessToken();
+    if (!access.ok) return access;
+    const withToken = (token: string): RequestInit => {
+        const headers = new Headers(request.headers);
+        headers.set('Authorization', `Bearer ${token}`);
+        return { ...request, headers };
+    };
+    const first = await fetchJson(url, validar, timeoutMs, withToken(access.value), fetchImpl);
+    if (!first.ok && first.reason.kind === 'server-error' && first.reason.status === 401) {
+        const refreshed = await session.refreshAfterUnauthorized(access.value);
+        if (!refreshed.ok) return refreshed;
+        return fetchJson(url, validar, timeoutMs, withToken(refreshed.value), fetchImpl);
+    }
+    return first;
 }

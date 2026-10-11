@@ -1,7 +1,11 @@
 import type { IncidentCategory, IncidentStatus } from '../../../campusops/contracts';
 import { parseRemoteResource } from '../../../course-evaluation';
 import type { FetchResult, ParseResult } from '../../../course-evaluation/contracts';
-import { fetchJson } from '../../../api/cloudClient';
+import { fetchJson, fetchJsonWithSession } from '../../../api/cloudClient';
+import type { SessionRequestCoordinator } from '../../../api/cloudClient';
+import { authorizeOperation } from '../application/authorizeOperation';
+import type { OperacionIncidencia } from '../application/authorizeOperation';
+import { sessionService } from '../../session/application/sessionService';
 import type {
     CreateIncidentInput,
     IncidentRepository,
@@ -23,7 +27,8 @@ export type CourseActorId =
 
 export type RemoteIncidentRepositoryOptions = Readonly<{
     actorId: CourseActorId;
-    accessToken: string;
+    accessToken?: string;
+    session?: SessionRequestCoordinator;
     baseUrl?: string;
     timeoutMs?: number;
     fetchImpl?: typeof fetch;
@@ -104,37 +109,37 @@ export class RemoteIncidentRepository implements IncidentRepository {
     private readonly headers: Readonly<Record<string, string>>;
     private readonly timeoutMs: number;
     private readonly fetchImpl: typeof fetch;
+    private readonly actorId: CourseActorId;
+    private readonly session: SessionRequestCoordinator | undefined;
 
     constructor(options: RemoteIncidentRepositoryOptions) {
         this.baseUrl = (options.baseUrl ?? process.env.EXPO_PUBLIC_COURSE_BACKEND_URL ?? DEFAULT_BASE_URL)
             .replace(/\/$/, '');
         this.headers = {
             Accept: 'application/json',
-            Authorization: `Bearer ${options.accessToken}`,
+            ...(options.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {}),
             'X-Course-Actor': options.actorId,
         };
         this.timeoutMs = options.timeoutMs ?? 5000;
         this.fetchImpl = options.fetchImpl ?? fetch;
+        this.actorId = options.actorId;
+        this.session = options.session ?? (options.accessToken ? undefined : sessionService);
     }
 
     async list(): Promise<FetchResult<readonly IncidentSnapshot[]>> {
-        const result = await fetchJson(
+        const result = await this.fetch(
             `${this.baseUrl}/v1/incidents`,
             isIncidentList,
-            this.timeoutMs,
             { headers: this.headers },
-            this.fetchImpl,
         );
         return mapResult(result, (body) => body.items.map(toSnapshot));
     }
 
     async getById(id: string): Promise<FetchResult<IncidentSnapshot | null>> {
-        const result = await fetchJson(
+        const result = await this.fetch(
             `${this.baseUrl}/v1/incidents/${encodeURIComponent(id)}`,
             isIncident,
-            this.timeoutMs,
             { headers: this.headers },
-            this.fetchImpl,
         );
         return mapResult(result, toSnapshot);
     }
@@ -146,10 +151,9 @@ export class RemoteIncidentRepository implements IncidentRepository {
         if (idempotencyKey.trim().length < 8) {
             return { ok: false, reason: { kind: 'contract-invalid' } };
         }
-        const result = await fetchJson(
+        const result = await this.fetch(
             `${this.baseUrl}/v1/incidents`,
             isCreateIncidentResponse,
-            this.timeoutMs,
             {
                 method: 'POST',
                 headers: {
@@ -159,8 +163,54 @@ export class RemoteIncidentRepository implements IncidentRepository {
                 },
                 body: JSON.stringify(input),
             },
-            this.fetchImpl,
         );
         return mapResult(result, (body) => toSnapshot(body.incident));
+    }
+
+    async actOnIncident(
+        snapshot: IncidentSnapshot,
+        action: Exclude<OperacionIncidencia, 'view'>,
+        details: Readonly<Record<string, unknown>>,
+        idempotencyKey: string,
+    ): Promise<FetchResult<IncidentSnapshot>> {
+        const incident = snapshot.incident;
+        if (!incident || snapshot.version === null || idempotencyKey.trim().length < 8) {
+            return { ok: false, reason: { kind: 'contract-invalid' } };
+        }
+        const role = this.actorId.startsWith('reporter-')
+            ? 'reporter'
+            : this.actorId.startsWith('technician-') ? 'technician' : 'coordinator';
+        const authorization = authorizeOperation(
+            { actorId: this.actorId, role },
+            { reporterId: incident.reporterId, assignedTechnicianId: incident.assignedTechnicianId },
+            action,
+        );
+        if (!authorization.allowed) return { ok: false, reason: { kind: 'forbidden' } };
+
+        const result = await this.fetch(
+            `${this.baseUrl}/v1/incidents/${encodeURIComponent(snapshot.id)}/actions`,
+            isCreateIncidentResponse,
+            {
+                method: 'POST',
+                headers: {
+                    ...this.headers,
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': idempotencyKey,
+                },
+                body: JSON.stringify({ ...details, action, baseVersion: snapshot.version }),
+            },
+        );
+        return mapResult(result, (body) => toSnapshot(body.incident));
+    }
+
+    private fetch<T>(
+        url: string,
+        validate: (payload: unknown) => payload is T,
+        request: RequestInit,
+    ): Promise<FetchResult<T>> {
+        if (this.session) {
+            return fetchJsonWithSession(url, validate, this.timeoutMs, request, this.fetchImpl, this.session);
+        }
+        return fetchJson(url, validate, this.timeoutMs, request, this.fetchImpl);
     }
 }

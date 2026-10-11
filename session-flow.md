@@ -21,7 +21,9 @@ Archivo: `src/features/session/infrastructure/secureSessionStorage.ts` (usa `exp
 ### Operaciones de sesión
 Archivo: `src/features/session/application/sessionService.ts`
 - `login(actorId)` llama `POST /v1/session/login`, valida el DTO y persiste access/refresh en SecureStore.
-- `refresh()` comparte una sola promesa, llama directamente `POST /v1/session/refresh` y reemplaza el par antes de retornar.
+- `getAccessToken()` compara la expiración calculada con el reloj del servicio; si expiró, inicia o comparte una renovación antes de devolver el token.
+- `refreshAfterUnauthorized(observedAccessToken)` comparte el refresh para 401 concurrentes y evita refrescar si otra solicitud ya guardó un access token más nuevo.
+- `refresh()` también comparte la misma operación; el servicio reemplaza el par en SecureStore antes de devolver éxito.
 - `logout()` elimina ambas claves seguras antes de devolver éxito.
 - `App.tsx` ofrece los controles de inicio y cierre de sesión y observa la máquina de estados.
 
@@ -38,12 +40,17 @@ Rutas del backend didáctico relevantes para sesión: `POST /v1/session/login` y
 2. La capa de sesión guarda ambos tokens en `SecureStore` con `saveSessionTokens` y devuelve sólo identidad/rol/expiración a la UI.
 3. La app muestra el estado autenticado. El control de cerrar sesión elimina access y refresh tokens.
 
-## 3. Expiración con refresh compartido (flujo objetivo)
-1. Una solicitud autenticada detecta 401 y el flujo solicita `sessionService.refresh()`.
+## 3. Expiración con refresh compartido
+1. `RemoteIncidentRepository` usa `fetchJsonWithSession` y solicita a `sessionService` un token vigente antes de enviar una operación.
 2. La primera llamada inicia **un solo** `POST /v1/session/refresh` con el `refreshToken`; es una llamada directa fuera de login y no se incluye Authorization.
 3. Las demás llamadas a refresh **esperan la misma promesa** y no inician otra.
 4. Con el refresh exitoso, se guarda el nuevo par y la máquina vuelve a `authenticated`.
-5. El adaptador que detectó el 401 reintenta la solicitud una vez con el nuevo `accessToken`.
+5. El adaptador que detectó el 401 reintenta la solicitud una vez con el nuevo `accessToken`; un segundo 401 se devuelve como error y no reinicia la renovación.
+6. La generación de sesión invalida respuestas de refresh que llegan después de logout; logout espera una renovación en vuelo y elimina el par al terminar.
+
+La expiración se calcula con un reloj inyectable en `createSessionService`, por lo que las pruebas avanzan el tiempo sin esperas reales. El instante de expiración vive en memoria; después de reiniciar la app, la primera petición puede detectar el vencimiento mediante 401 y renovar.
+
+Las operaciones mutables pasan además por `authorizeOperation` antes de enviar `POST /v1/incidents/:id/actions`. Es un control local de defensa en profundidad; el backend sigue siendo autoridad final y valida rol, asignación y versión.
 
 ## 4. Refresh fallido con logout
 1. El refresh responde 401 (`invalid_grant`), su DTO es inválido o la red falla.

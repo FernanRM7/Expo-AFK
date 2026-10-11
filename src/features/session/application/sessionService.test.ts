@@ -177,3 +177,72 @@ test('concurrent refresh requests share one endpoint call', async () => {
   ]);
   expect(fetchImpl).toHaveBeenCalledTimes(1);
 });
+
+test('an injected clock triggers refresh at expiry without waiting in real time', async () => {
+  let now = 1000;
+  const storage = memoryStore();
+  const fetchImpl = jest.fn<Promise<Response>, Parameters<typeof fetch>>().mockImplementation(async (input) => {
+    if (String(input).endsWith('/v1/session/login')) {
+      return httpResponse({
+        actorId: 'reporter-1',
+        role: 'reporter',
+        accessToken: 'synthetic-first-access',
+        refreshToken: 'synthetic-first-refresh',
+        expiresIn: 10,
+      });
+    }
+    return httpResponse({
+      accessToken: 'synthetic-renewed-access',
+      refreshToken: 'synthetic-renewed-refresh',
+      expiresIn: 20,
+    });
+  });
+  const service = createSessionService({
+    fetchImpl: fetchImpl as typeof fetch,
+    tokenStore: storage.store,
+    now: () => now,
+  });
+
+  await service.login('reporter-1');
+  now = 10999;
+  await expect(service.getAccessToken()).resolves.toEqual({ ok: true, value: 'synthetic-first-access' });
+  now = 11000;
+  await expect(service.getAccessToken()).resolves.toEqual({ ok: true, value: 'synthetic-renewed-access' });
+  expect(fetchImpl).toHaveBeenCalledTimes(2);
+  expect(storage.read()).toEqual({
+    accessToken: 'synthetic-renewed-access',
+    refreshToken: 'synthetic-renewed-refresh',
+  });
+});
+
+test('logout during an in-flight refresh waits for it and leaves no persisted tokens', async () => {
+  const storage = memoryStore({
+    accessToken: 'synthetic-expired-access',
+    refreshToken: 'synthetic-refresh',
+  });
+  transitionSessionLifecycle('login-started');
+  transitionSessionLifecycle('login-succeeded');
+  let releaseResponse!: (response: Response) => void;
+  let markRefreshStarted!: () => void;
+  const responsePending = new Promise<Response>((resolve) => { releaseResponse = resolve; });
+  const refreshStarted = new Promise<void>((resolve) => { markRefreshStarted = resolve; });
+  const fetchImpl = jest.fn<Promise<Response>, Parameters<typeof fetch>>().mockImplementation(() => {
+    markRefreshStarted();
+    return responsePending;
+  });
+  const service = createSessionService({ fetchImpl: fetchImpl as typeof fetch, tokenStore: storage.store });
+
+  const refresh = service.refresh();
+  await refreshStarted;
+  const logout = service.logout();
+  releaseResponse(httpResponse({
+    accessToken: 'synthetic-stale-access',
+    refreshToken: 'synthetic-stale-refresh',
+    expiresIn: 60,
+  }));
+
+  await expect(refresh).resolves.toEqual({ ok: false, reason: { kind: 'session-expired' } });
+  await expect(logout).resolves.toEqual({ ok: true, value: null });
+  expect(storage.read()).toBeNull();
+  expect(getSessionLifecycleState()).toBe('unauthenticated');
+});

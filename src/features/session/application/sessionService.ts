@@ -22,11 +22,11 @@ export type SessionServiceDependencies = Readonly<{
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   tokenStore?: SessionTokenStore;
+  now?: () => number;
 }>;
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:4310';
 const REQUEST_TIMEOUT_MS = 5000;
-let refreshInFlight: Promise<FetchResult<null>> | null = null;
 const lazyTokenStore: SessionTokenStore = {
   async readSessionTokens() {
     return (await import('../infrastructure/secureSessionStorage')).readSessionTokens();
@@ -81,9 +81,68 @@ export function createSessionService(dependencies: SessionServiceDependencies = 
     .replace(/\/$/, '');
   const fetchImpl = dependencies.fetchImpl ?? fetch;
   const tokenStore = dependencies.tokenStore ?? lazyTokenStore;
+  const now = dependencies.now ?? Date.now;
+  let refreshInFlight: Promise<FetchResult<string>> | null = null;
+  let generation = 0;
+  let expiresAt: number | null = null;
+
+  async function readTokens(): Promise<SessionTokens | null> {
+    try {
+      return await tokenStore.readSessionTokens();
+    } catch {
+      return null;
+    }
+  }
+
+  async function refreshAccessToken(): Promise<FetchResult<string>> {
+    if (refreshInFlight) return refreshInFlight;
+    const refreshGeneration = generation;
+    transitionSessionLifecycle('access-token-expired');
+    transitionSessionLifecycle('refresh-started');
+    const operation = (async (): Promise<FetchResult<string>> => {
+      try {
+        const currentTokens = await tokenStore.readSessionTokens();
+        if (!currentTokens) return await failRefresh(tokenStore, refreshGeneration, generation);
+        const response = await fetchWithTimeout(fetchImpl, `${baseUrl}/v1/session/refresh`, {
+          method: 'POST',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: currentTokens.refreshToken }),
+        });
+        if (!response.ok) {
+          reportCampusOpsError('backend_http_error', { status: response.status });
+          return await failRefresh(tokenStore, refreshGeneration, generation);
+        }
+        const payload: unknown = await response.json().catch(() => undefined);
+        if (!isRefreshResponse(payload)) {
+          reportCampusOpsError('backend_contract_mismatch', { status: response.status });
+          return await failRefresh(tokenStore, refreshGeneration, generation);
+        }
+        if (refreshGeneration !== generation) return { ok: false, reason: { kind: 'session-expired' } };
+        await tokenStore.saveSessionTokens({ accessToken: payload.accessToken, refreshToken: payload.refreshToken });
+        if (refreshGeneration !== generation) {
+          await tokenStore.deleteSessionTokens();
+          return { ok: false, reason: { kind: 'session-expired' } };
+        }
+        expiresAt = now() + payload.expiresIn * 1000;
+        generation += 1;
+        transitionSessionLifecycle('refresh-succeeded');
+        return { ok: true, value: payload.accessToken };
+      } catch {
+        reportCampusOpsError('backend_request_failed', { status: 'network_error' });
+        return await failRefresh(tokenStore, refreshGeneration, generation);
+      }
+    })();
+    const shared = operation.finally(() => {
+      if (refreshInFlight === shared) refreshInFlight = null;
+    });
+    refreshInFlight = shared;
+    return shared;
+  }
 
   return {
     async login(actorId: CourseActorId): Promise<FetchResult<SessionIdentity>> {
+      generation += 1;
+      const loginGeneration = generation;
       transitionSessionLifecycle('login-started');
       let response: Response;
       try {
@@ -110,6 +169,8 @@ export function createSessionService(dependencies: SessionServiceDependencies = 
         return { ok: false, reason: { kind: 'contract-invalid' } };
       }
 
+      if (loginGeneration !== generation) return { ok: false, reason: { kind: 'session-expired' } };
+
       try {
         await tokenStore.saveSessionTokens({
           accessToken: payload.accessToken,
@@ -122,6 +183,7 @@ export function createSessionService(dependencies: SessionServiceDependencies = 
       }
 
       transitionSessionLifecycle('login-succeeded');
+      expiresAt = now() + payload.expiresIn * 1000;
       return {
         ok: true,
         value: {
@@ -133,47 +195,29 @@ export function createSessionService(dependencies: SessionServiceDependencies = 
     },
 
     async refresh(): Promise<FetchResult<null>> {
-      if (!refreshInFlight) {
-        transitionSessionLifecycle('access-token-expired');
-        transitionSessionLifecycle('refresh-started');
-        const operation = (async (): Promise<FetchResult<null>> => {
-          try {
-            const currentTokens = await tokenStore.readSessionTokens();
-            if (!currentTokens) return await failRefresh(tokenStore);
-            const response = await fetchWithTimeout(fetchImpl, `${baseUrl}/v1/session/refresh`, {
-              method: 'POST',
-              headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-              body: JSON.stringify({ refreshToken: currentTokens.refreshToken }),
-            });
-            if (!response.ok) {
-              reportCampusOpsError('backend_http_error', { status: response.status });
-              return await failRefresh(tokenStore);
-            }
-            const payload: unknown = await response.json().catch(() => undefined);
-            if (!isRefreshResponse(payload)) {
-              reportCampusOpsError('backend_contract_mismatch', { status: response.status });
-              return await failRefresh(tokenStore);
-            }
-            await tokenStore.saveSessionTokens({
-              accessToken: payload.accessToken,
-              refreshToken: payload.refreshToken,
-            });
-            transitionSessionLifecycle('refresh-succeeded');
-            return { ok: true, value: null };
-          } catch {
-            reportCampusOpsError('backend_request_failed', { status: 'network_error' });
-            return await failRefresh(tokenStore);
-          }
-        })();
-        const shared = operation.finally(() => {
-          if (refreshInFlight === shared) refreshInFlight = null;
-        });
-        refreshInFlight = shared;
-      }
-      return refreshInFlight;
+      const result = await refreshAccessToken();
+      return result.ok ? { ok: true, value: null } : result;
+    },
+
+    async getAccessToken(): Promise<FetchResult<string>> {
+      const tokens = await readTokens();
+      if (!tokens) return { ok: false, reason: { kind: 'session-expired' } };
+      if (expiresAt !== null && now() >= expiresAt) return refreshAccessToken();
+      return { ok: true, value: tokens.accessToken };
+    },
+
+    async refreshAfterUnauthorized(observedAccessToken: string): Promise<FetchResult<string>> {
+      const tokens = await readTokens();
+      if (!tokens) return await failRefresh(tokenStore, generation, generation);
+      if (tokens.accessToken !== observedAccessToken) return { ok: true, value: tokens.accessToken };
+      return refreshAccessToken();
     },
 
     async logout(): Promise<FetchResult<null>> {
+      generation += 1;
+      expiresAt = null;
+      const pendingRefresh = refreshInFlight;
+      if (pendingRefresh) await pendingRefresh;
       try {
         await tokenStore.deleteSessionTokens();
         transitionSessionLifecycle('logout');
@@ -187,13 +231,20 @@ export function createSessionService(dependencies: SessionServiceDependencies = 
   };
 }
 
-async function failRefresh(tokenStore: SessionTokenStore): Promise<FetchResult<null>> {
-  try {
-    await tokenStore.deleteSessionTokens();
-  } catch {
-    reportCampusOpsError('session_storage_failed', { operation: 'clear' });
+async function failRefresh(
+  tokenStore: SessionTokenStore,
+  operationGeneration: number,
+  currentGeneration: number,
+): Promise<FetchResult<string>> {
+  if (operationGeneration === currentGeneration) {
+    try {
+      await tokenStore.deleteSessionTokens();
+      transitionSessionLifecycle('refresh-failed');
+    } catch {
+      reportCampusOpsError('session_storage_failed', { operation: 'clear' });
+      transitionSessionLifecycle('refresh-failed');
+    }
   }
-  transitionSessionLifecycle('refresh-failed');
   return { ok: false, reason: { kind: 'session-expired' } };
 }
 

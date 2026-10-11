@@ -103,7 +103,16 @@ export function coordinateRefresh(events: readonly AuthEvent[]): Readonly<{
   const retriedRequestIds = new Set<string>();
 
   for (const event of events) {
-    if (event.type === 'logout' || event.type === 'refreshFailed') {
+    if (event.type === 'logout') {
+      status = 'anonymous';
+      persistedToken = null;
+      refreshPending = false;
+      pendingRequestIds.clear();
+      continue;
+    }
+
+    if (event.type === 'refreshFailed') {
+      if (event.generation !== undefined && event.generation !== activeGeneration) continue;
       status = 'anonymous';
       persistedToken = null;
       refreshPending = false;
@@ -117,9 +126,9 @@ export function coordinateRefresh(events: readonly AuthEvent[]): Readonly<{
         pendingRequestIds.has(event.requestId) || retriedRequestIds.has(event.requestId)
       ) continue;
       const requestGeneration = event.generation ?? activeGeneration;
-      if (requestGeneration !== activeGeneration && persistedToken) {
+      if (requestGeneration < activeGeneration && persistedToken) {
         retriedRequestIds.add(event.requestId);
-      } else {
+      } else if (requestGeneration === activeGeneration) {
         pendingRequestIds.add(event.requestId);
       }
       if (requestGeneration === activeGeneration && !refreshPending) {
@@ -130,7 +139,9 @@ export function coordinateRefresh(events: readonly AuthEvent[]): Readonly<{
     }
 
     if (event.type === 'refreshSucceeded') {
-      activeGeneration = event.generation ?? activeGeneration + 1;
+      const nextGeneration = event.generation ?? activeGeneration + 1;
+      if (nextGeneration <= activeGeneration) continue;
+      activeGeneration = nextGeneration;
       persistedToken = event.token ?? null;
       status = persistedToken ? 'authenticated' : 'anonymous';
       refreshPending = false;
