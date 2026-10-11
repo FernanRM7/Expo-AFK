@@ -1,0 +1,21 @@
+stateDiagram-v2
+    [*] --> unauthenticated
+    unauthenticated --> authenticating: login-started
+    authenticating --> authenticated: login-succeeded / guardar par en SecureStore
+    authenticating --> unauthenticated: login-failed
+    authenticating --> unauthenticated: logout
+
+    authenticated --> expired: HTTP 401
+    authenticated --> authenticating: login-started
+    authenticated --> unauthenticated: logout / eliminar par seguro
+    expired --> refreshing: refresh-started (single-flight)
+    expired --> unauthenticated: refresh-failed / eliminar par seguro
+    expired --> unauthenticated: logout / eliminar par seguro
+    refreshing --> authenticated: refresh-succeeded / guardar par y reintentar una vez
+    refreshing --> unauthenticated: refresh-failed / eliminar par seguro
+    refreshing --> unauthenticated: logout / eliminar par seguro
+
+    note right of refreshing
+        El refresh usa el mismo fetch compartido.
+        Sus errores no registran tokens.
+    end note

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "week": 6,
+  "teamId": "9B-E11",
+  "members": [
+    {
+      "studentId": "3523110409",
+      "commitShas": [
+        "453b9f6c75653ce52303483da6f4232e7a1b5417"
+      ],
+      "files": [
+        "App.tsx",
+        "course-tests/public/week-06.test.ts",
+        "course-tests/smoke.test.tsx",
+        "docs/session-state-machine.mmd",
+        "session-flow.md",
+        "src/course-evaluation/index.ts",
+        "src/features/session/application/sessionLifecycle.ts",
+        "src/features/session/application/sessionLifecycle.test.ts",
+        "src/features/session/application/sessionService.ts",
+        "src/features/session/application/sessionService.test.ts",
+        "src/features/session/infrastructure/secureSessionStorage.ts",
+        "src/features/session/infrastructure/secureSessionStorage.test.ts"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx — 5 suites y 18 tests aprobados.",
+        "npx eslint App.tsx course-tests/public/week-06.test.ts course-tests/smoke.test.tsx src/course-evaluation/index.ts src/features/session/application/sessionLifecycle.ts src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.ts src/features/session/infrastructure/secureSessionStorage.test.ts --rule import/namespace: off --rule import/no-unresolved: off --rule import/no-duplicates: off — pasó sin errores.",
+        "git diff --check sobre los archivos propios — pasó sin errores."
+      ],
+      "reviews": [],
+      "prediction": "Esperaba que el ciclo de sesión sólo aceptara transiciones válidas, guardara el par de tokens con SecureStore al iniciar, eliminara ambos al cerrar o fallar el refresh y compartiera una sola petición de renovación concurrente.",
+      "command": "npm test -- --ci --runInBand src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx",
+      "observedResult": "PASS: 5 suites y 18 tests aprobados. Los tests cubrieron transiciones de login/expiración/refresh/logout, login válido y rechazado, refresh válido y fallido, coalescencia de refresh, borrado verificable del par persistido, ausencia de secretos en telemetría y controles de login/logout en App.",
+      "explanation": "Implementé el servicio de sesión con login, renovación compartida y logout; almacené access y refresh tokens únicamente en SecureStore; modelé estados/transiciones explícitos y conecté la UI. Añadí pruebas deterministas y el diagrama Mermaid. La contribución está en el commit propio 453b9f6c75653ce52303483da6f4232e7a1b5417."
+    },
+    {
+      "studentId": "3523110016",
+      "commitShas": [
+        "f0496c3eafbdaf6c52aad07d11003a9cfdd8529d"
+      ],
+      "files": [
+        "src/features/incidents/application/authorizeOperation.ts",
+        "src/features/incidents/application/authorizeOperation.test.ts",
+        "docs/session-authorization.md",
+        "reports/week-06/auth-tests.json"
+      ],
+      "tests": [
+        "npx jest src/features/incidents/application/authorizeOperation.test.ts --verbose — 1 suite y 8 tests aprobados."
+      ],
+      "reviews": [
+        "Contraste de las reglas de authorizeOperation con las del backend didáctico (course-backend/campusops.mjs): coordinación para assign/prioritize/close/reopen, técnico solo start/resolve sobre incidencias asignadas, reportante solo sus incidencias."
+      ],
+      "prediction": "Esperaba que cada rol solo pudiera ejecutar sus operaciones, que un técnico no asignado y otro reportante fueran rechazados, y que el rechazo no expusiera datos de la incidencia.",
+      "command": "npx jest src/features/incidents/application/authorizeOperation.test.ts --verbose",
+      "observedResult": "PASS: 1 suite y 8 tests aprobados, con casos permitidos y denegados por rol y asignación.",
+      "explanation": "Implementé authorizeOperation, una función pura en la capa application que valida permisos por perfil y asignación, con rechazo genérico 'forbidden'. Añadí pruebas deterministas sin red y documenté en docs/session-authorization.md que el selector de actor del backend es solo una ayuda de prueba. En mi commit la política aún no estaba conectada a operaciones; Fernan la integró después en RemoteIncidentRepository antes del POST de acciones."
+    },
+    {
+      "studentId": "3523110657",
+      "commitShas": [
+        "8b5f7f5f04eaa5348fed3bdb5d035440f1f57943",
+        "f88af40129f07529027a5a3d0cb0af40cf74df86",
+        "7710fb1fd153aadbc1478b065f9083a522559b16"
+      ],
+      "files": [
+        "src/features/session/application/sessionService.ts",
+        "src/features/session/application/sessionService.test.ts",
+        "src/features/incidents/infrastructure/remoteIncidentRepository.ts",
+        "src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+        "src/api/cloudClient.ts",
+        "src/course-evaluation/index.ts",
+        ".github/workflows/week-05-cliente-cloud-feedback.yml"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts src/features/incidents/application/authorizeOperation.test.ts src/features/incidents/infrastructure/remoteIncidentRepository.test.ts src/api/cloudClient.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx — 8 suites y 40 tests pasaron, incluida respuesta 401 tras el único reintento.",
+        "make verify-week-06 — status pass en 7710fb1fd153aadbc1478b065f9083a522559b16; backend:self-test y escaneo de secretos pasaron."
+      ],
+      "reviews": [
+        "Inspeccioné los checks del PR #53 y detecté que partía de Week 04; integré main para conservar Week 05 y añadí checkout del SHA del PR e historial completo al workflow de Week 05/06."
+      ],
+      "prediction": "Esperaba que solicitudes con 401 concurrente compartieran la renovación del SessionService y que cada listado se reintentara una sola vez con el token nuevo; logout debía invalidar una respuesta refresh tardía.",
+      "command": "npm test -- --ci --runInBand src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+      "observedResult": "PASS: 1 suite y 8 tests. Tres listados simultáneos produjeron una única llamada refresh y tres reintentos con el access token nuevo; una segunda respuesta 401 terminó con server-error 401 después de exactamente una renovación.",
+      "explanation": "Conecté fetchJsonWithSession y el ciclo de refresh del servicio real al RemoteIncidentRepository, añadí expiración por reloj inyectable y guards de generación para refresh obsoleto/logout. Integré authorizeOperation antes de POST de acciones: el técnico no asignado se rechaza sin HTTP y coordinación sí envía la acción autorizada. Registré los resultados de tests y verificación en los reportes Week 06."
+    }
+  ]
+}

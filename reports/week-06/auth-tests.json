@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "week": 6,
+  "commitSha": "7710fb1fd153aadbc1478b065f9083a522559b16",
+  "generatedAt": "2026-10-11T16:50:23Z",
+  "checks": [
+    {
+      "id": "login-stores-only-secure-tokens",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx",
+      "evidence": "La suite del servicio de sesión y SecureStore valida login aceptado/rechazado, identidad sin tokens en el resultado y almacenamiento del par exclusivamente en el store seguro."
+    },
+    {
+      "id": "expiration-with-controlled-clock",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand src/features/session/application/sessionService.test.ts",
+      "evidence": "El test avanza un reloj inyectado de 10999 a 11000 ms: antes conserva el access token y en el instante de expiración solicita una renovación y devuelve el token nuevo, sin esperar tiempo real."
+    },
+    {
+      "id": "roles-authorize-actions-before-network",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand src/features/incidents/application/authorizeOperation.test.ts src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+      "evidence": "Reportante, técnico asignado y coordinador cubren permisos permitidos; técnico no asignado devuelve forbidden sin llamada HTTP, y coordinación autorizada envía POST a /v1/incidents/:id/actions."
+    },
+    {
+      "id": "failed-refresh-and-logout-clear-session",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts",
+      "evidence": "Refresh fallido retorna session-expired y deja el store vacío; logout durante refresh espera la operación, descarta su respuesta obsoleta y termina en unauthenticated sin tokens."
+    },
+    {
+      "id": "synthetic-session-errors-do-not-leak-tokens",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts",
+      "evidence": "Las aserciones serializan telemetría y errores de almacenamiento/red; ningún valor synthetic-* de los tokens aparece en el resultado observado."
+    }
+  ]
+}

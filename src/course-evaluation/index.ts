@@ -87,14 +87,78 @@ export function parseRemoteResource(input: unknown): ParseResult {
   };
 }
 
-export function coordinateRefresh(_events: readonly AuthEvent[]): Readonly<{
+export function coordinateRefresh(events: readonly AuthEvent[]): Readonly<{
   status: 'anonymous' | 'authenticated';
   activeGeneration: number | null;
   refreshCalls: number;
   retriedRequestIds: readonly string[];
   persistedToken: string | null;
 }> {
-  return pending('coordinateRefresh');
+  let status: 'anonymous' | 'authenticated' = 'authenticated';
+  let activeGeneration = 0;
+  let refreshCalls = 0;
+  let refreshPending = false;
+  let persistedToken: string | null = null;
+  const pendingRequestIds = new Set<string>();
+  const retriedRequestIds = new Set<string>();
+
+  for (const event of events) {
+    if (event.type === 'logout') {
+      status = 'anonymous';
+      persistedToken = null;
+      refreshPending = false;
+      pendingRequestIds.clear();
+      continue;
+    }
+
+    if (event.type === 'refreshFailed') {
+      if (event.generation !== undefined && event.generation !== activeGeneration) continue;
+      status = 'anonymous';
+      persistedToken = null;
+      refreshPending = false;
+      pendingRequestIds.clear();
+      continue;
+    }
+
+    if (event.type === 'request401') {
+      if (
+        status !== 'authenticated' || !event.requestId ||
+        pendingRequestIds.has(event.requestId) || retriedRequestIds.has(event.requestId)
+      ) continue;
+      const requestGeneration = event.generation ?? activeGeneration;
+      if (requestGeneration < activeGeneration && persistedToken) {
+        retriedRequestIds.add(event.requestId);
+      } else if (requestGeneration === activeGeneration) {
+        pendingRequestIds.add(event.requestId);
+      }
+      if (requestGeneration === activeGeneration && !refreshPending) {
+        refreshPending = true;
+        refreshCalls += 1;
+      }
+      continue;
+    }
+
+    if (event.type === 'refreshSucceeded') {
+      const nextGeneration = event.generation ?? activeGeneration + 1;
+      if (nextGeneration <= activeGeneration) continue;
+      activeGeneration = nextGeneration;
+      persistedToken = event.token ?? null;
+      status = persistedToken ? 'authenticated' : 'anonymous';
+      refreshPending = false;
+      if (persistedToken) {
+        for (const requestId of pendingRequestIds) retriedRequestIds.add(requestId);
+      }
+      pendingRequestIds.clear();
+    }
+  }
+
+  return {
+    status,
+    activeGeneration: status === 'authenticated' ? activeGeneration : null,
+    refreshCalls,
+    retriedRequestIds: [...retriedRequestIds],
+    persistedToken,
+  };
 }
 
 export function resolveSync(

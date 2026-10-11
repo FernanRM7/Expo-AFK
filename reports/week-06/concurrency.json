@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "week": 6,
+  "commitSha": "7710fb1fd153aadbc1478b065f9083a522559b16",
+  "generatedAt": "2026-10-11T16:50:23Z",
+  "checks": [
+    {
+      "id": "three-401s-share-one-refresh",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+      "evidence": "Tres listados concurrentes reciben 401; se observan exactamente tres respuestas iniciales, una llamada POST /v1/session/refresh, tres reintentos con el access token nuevo y un único guardado del par renovado."
+    },
+    {
+      "id": "second-401-does-not-loop-refresh",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand src/features/incidents/infrastructure/remoteIncidentRepository.test.ts",
+      "evidence": "La petición inicial y su único reintento devuelven 401; el cliente retorna server-error 401 después de tres llamadas totales, con exactamente una renovación y sin bucle."
+    },
+    {
+      "id": "obsolete-refresh-cannot-replace-logged-out-session",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand src/features/session/application/sessionService.test.ts",
+      "evidence": "Logout incrementa la generación mientras refresh está pendiente; la respuesta tardía no se persiste y, al finalizar logout, ambas lecturas seguras quedan vacías."
+    },
+    {
+      "id": "obsolete-generation-does-not-clear-new-session",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-06.test.ts",
+      "evidence": "El reducer conserva generation 1 autenticada cuando llega un refreshFailed de generation 0 y permite reintentar una sola vez la solicitud que llevaba el token anterior."
+    }
+  ]
+}
