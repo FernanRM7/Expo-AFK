@@ -1,0 +1,20 @@
+{
+  "scope": "issue-54 persistence and migration tests only",
+  "observedDate": "2026-10-22",
+  "verification": {
+    "command": "bun run test -- --runInBand src/persistence/localStore.test.ts",
+    "passed": true,
+    "suitesPassed": 1,
+    "testsPassed": 3,
+    "testsFailed": 0,
+    "cases": [
+      "fresh schema migration reaches version 2",
+      "injected migration failure rolls back and retry succeeds",
+      "version 1 upgrade adds the outbox without removing incidents"
+    ]
+  },
+  "limitations": [
+    "Migration scenarios use an injected SQLite-shaped test double; they do not claim a native-device restart run.",
+    "Conflict and idempotent server synchronization are tracked separately in issues 55 and 56 and are not reported as verified here."
+  ]
+}
