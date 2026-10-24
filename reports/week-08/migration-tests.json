@@ -15,6 +15,80 @@
   },
   "limitations": [
     "Migration scenarios use an injected SQLite-shaped test double; they do not claim a native-device restart run.",
-    "Conflict and idempotent server synchronization are tracked separately in issues 55 and 56 and are not reported as verified here."
-  ]
+    "Idempotent server synchronization remains tracked separately in issue 56; issue 55 evidence is recorded in issue55ConflictResolution."
+  ],
+  "issue55ConflictResolution": {
+    "schemaVersion": 1,
+    "week": 8,
+    "suite": "offline-work-reassignment-conflict",
+    "command": "npm test -- --ci --runInBand src/features/incidents/application/offlineWorkSyncService.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts src/features/incidents/ui/OfflineWorkQueueScreen.test.tsx course-tests/public/week-08.test.ts course-tests/smoke.test.tsx",
+    "result": {
+      "status": "pass",
+      "testSuites": 5,
+      "testsPassed": 19,
+      "testsFailed": 0
+    },
+    "additionalValidation": [
+      {
+        "command": "npm run typecheck",
+        "status": "pass"
+      },
+      {
+        "command": "npx eslint App.tsx src/course-evaluation/index.ts src/features/incidents/domain/pendingWorkQueue.ts src/features/incidents/application/offlineWorkSyncService.ts src/features/incidents/application/offlineWorkSyncService.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts src/features/incidents/ui/OfflineWorkQueueScreen.tsx src/features/incidents/ui/OfflineWorkQueueScreen.test.tsx course-tests/public/week-08.test.ts course-tests/smoke.test.tsx",
+        "status": "pass"
+      },
+      {
+        "command": "git diff --check",
+        "status": "pass"
+      }
+    ],
+    "checks": [
+      {
+        "id": "detects-concurrent-work-conflict",
+        "status": "pass",
+        "evidence": "La actualización local a in_progress y la reasignación remota producen kind=conflict para work."
+      },
+      {
+        "id": "preserves-canonical-remote-assignment",
+        "status": "pass",
+        "evidence": "La reconciliación conserva el snapshot remoto con technician-2 asignado y status=assigned; no aplica la asignación local anterior."
+      },
+      {
+        "id": "preserves-pending-operation-metadata",
+        "status": "pass",
+        "evidence": "La cola conserva operationId, actorId, baseVersion, acción y payload de la intención start offline, sin mutar entradas originales."
+      },
+      {
+        "id": "persists-operation-in-sqlite",
+        "status": "pass",
+        "evidence": "La prueba abre dos instancias de SQLitePendingWorkQueue sobre la misma base simulada y verifica lectura persistida, transición a needs-review y borrado explícito."
+      },
+      {
+        "id": "queues-start-from-cached-snapshot",
+        "status": "pass",
+        "evidence": "La pantalla encola start con el snapshot previamente cargado y no vuelve a consultar el servidor al guardar la intención offline."
+      },
+      {
+        "id": "presents-conflict-and-resolution-controls",
+        "status": "pass",
+        "evidence": "La interfaz presenta el conflicto, la asignación remota disponible, autor y versión base; el descarte requiere confirmación nativa y el reintento es una decisión explícita."
+      },
+      {
+        "id": "requires-explicit-safe-retry",
+        "status": "pass",
+        "evidence": "El reintento no se emite si el autor ya no está asignado o si la versión remota es anterior. Con confirmación y asignación vigente, solo se rebasa baseVersion."
+      },
+      {
+        "id": "requires-explicit-discard",
+        "status": "pass",
+        "evidence": "La operación solo sale de la cola mediante una decisión explícita discard; el registro remoto permanece como resultado."
+      },
+      {
+        "id": "operation-author-ownership",
+        "status": "pass",
+        "evidence": "Una sesión de otro técnico no lista, reintenta ni descarta la operación local del autor."
+      }
+    ],
+    "note": "La cola SQLite y la pantalla de revisión están integradas en la app. expo-sqlite se agregó como dependencia compatible con Expo SDK 57; npm ci restauró las dependencias bloqueadas y las pruebas de aplicación y conciliación pasaron."
+  }
 }

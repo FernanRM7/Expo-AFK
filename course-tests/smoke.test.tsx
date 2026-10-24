@@ -49,3 +49,22 @@ test('login and logout controls reflect session transitions', async () => {
   expect(sessionService.login).toHaveBeenCalledWith('reporter-1');
   expect(sessionService.logout).toHaveBeenCalledTimes(1);
 });
+
+test('a technician can open the offline work and conflict review entry point', async () => {
+  jest.mocked(sessionService.login).mockImplementation(async (actorId) => {
+    transitionSessionLifecycle('login-started');
+    transitionSessionLifecycle('login-succeeded');
+    return {
+      ok: true,
+      value: { actorId, role: 'technician', expiresIn: 60 },
+    };
+  });
+  const view = await render(<App />);
+
+  await act(async () => fireEvent.press(view.getByTestId('technician-login-button')));
+
+  await waitFor(() => {
+    expect(view.getByText('Trabajo sin conexión')).toBeTruthy();
+  });
+  expect(sessionService.login).toHaveBeenCalledWith('technician-1');
+});
