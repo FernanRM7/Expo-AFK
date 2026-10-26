@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "week": 8,
-  "commitSha": "60d70d0f753c5e387c5a2f6920b6a01f5ca849b8",
-  "generatedAt": "2026-10-26T04:06:00Z",
+  "commitSha": "8492490bcd77f6a1428b9c5fb08a67ce516b4918",
+  "generatedAt": "2026-10-26T15:41:38Z",
   "checks": [
     {
       "id": "sqlite-migration-rollback-and-recovery",
@@ -45,6 +45,13 @@
       "scenarioType": "nominal",
       "command": "make feedback && make verify-week-08",
       "evidence": "TypeScript, ESLint, smoke tests, npm audit al umbral crítico, export Android y los diez checks de verificación de Semana 08 pasaron. npm audit reportó vulnerabilidades altas en dependencias de desarrollo/transitivas sin hallazgos críticos; backend:self-test pasó fuera del sandbox."
+    },
+    {
+      "id": "deduplication-preserves-frozen-inputs-and-pending-timeout",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand src/course-evaluation/syncDeduplication.test.ts src/features/incidents/application/offlineWorkSyncService.test.ts",
+      "evidence": "2 suites y 9 pruebas pasaron. El test de entradas congeladas confirma que deduplicateOperations mantiene identidad y orden sin mutar; timeout conserva la operación pendiente con el mismo ID."
     }
   ]
 }

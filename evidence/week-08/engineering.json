@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 8,
-  "commitSha": "60d70d0f753c5e387c5a2f6920b6a01f5ca849b8",
+  "commitSha": "8492490bcd77f6a1428b9c5fb08a67ce516b4918",
   "decision": "La cola SQLite conserva cada operación completa y su snapshot base bajo una identidad estable. El servicio deduplica por operationId antes de sincronizar y el mismo identificador viaja como clave de idempotencia en cada reintento. La sincronización vuelve a leer el incidente remoto, combina cambios independientes y pone los conflictos en revisión sin aplicar una asignación vieja ni retirar la intención local. Las migraciones de snapshots y cola comparten transacciones por base; al abrir la cola se migra de forma atómica su tabla legacy.",
   "alternatives": [
     "Guardar sólo la acción y reconstruir el resto al sincronizar; reduce columnas y JSON local, pero una nota, URI de foto o snapshot base puede perderse al cerrar la app y no se puede explicar el conflicto original.",
@@ -39,8 +39,8 @@
     },
     {
       "command": "make public-test-week-08",
-      "result": "incomplete",
-      "evidence": "Las verificaciones técnicas, el reporte de migración y engineering.json pasaron; el evaluador indicó únicamente que falta evidence/week-08/individual.json. El equipo confirmó que el tercer integrante aún no aportó commit ni revisión Week 08, por lo que esta evidencia queda pendiente."
+      "result": "pass",
+      "evidence": "El evaluador público pasó en el HEAD 8492490 con el individual.json de los tres integrantes; validó migración, evidencia de ingeniería e individual, tipos, lint, audit, y las pruebas públicas Week 08."
     },
     {
       "command": "make verify-week-08",
@@ -51,6 +51,12 @@
       "command": "Week 08 workflow checkout with fetch-depth: 0",
       "result": "pass",
       "evidence": "El workflow evalúa el SHA de cabeza del PR y tiene disponible el commit padre para verificar que los cambios entre reporte y checkout sean sólo reports/ y evidence/."
+    },
+    {
+      "command": "npm test -- --ci --runInBand src/course-evaluation/syncDeduplication.test.ts src/features/incidents/application/offlineWorkSyncService.test.ts",
+      "result": "pass",
+      "evidence": "Las 2 suites y 9 pruebas aportadas en el commit 8492490 pasaron: deduplicación sin mutación y conservación de la operación pendiente en timeout."
     }
-  ]
+  ],
+  "assistance": "Codex asistió en implementación, revisión y redacción de evidencias. El equipo verificó los cambios con pruebas Jest, SQLite real en archivos temporales, typecheck, ESLint, make feedback, los evaluadores públicos y los checks de Actions."
 }

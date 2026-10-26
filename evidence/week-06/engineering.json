@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 6,
-  "commitSha": "60d70d0f753c5e387c5a2f6920b6a01f5ca849b8",
+  "commitSha": "8492490bcd77f6a1428b9c5fb08a67ce516b4918",
   "decision": "El servicio de sesión es dueño de la generación, expiración y única promesa de refresh. Las solicitudes de incidencias obtienen el token vigente desde ese servicio; ante 401 entregan el token observado para distinguir una renovación ya completada, comparten el refresh pendiente y reintentan una sola vez. Logout invalida la generación, espera el refresh en vuelo y elimina el par de SecureStore. Las acciones mutables pasan por autorización local antes del HTTP y el backend conserva la autoridad final.",
   "alternatives": [
     "Renovar de forma independiente desde cada solicitud 401; es simple por llamada, pero produce refresh duplicados, carreras con rotación de tokens y cierres de sesión falsos.",
