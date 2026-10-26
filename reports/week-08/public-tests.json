@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "week": 8,
   "mode": "public",
-  "commitSha": "9820b00e8d557a59f2f46bcfa234840ba87564fe",
-  "evaluatedAt": "2026-10-26T04:02:57.671810+00:00",
+  "commitSha": "60d70d0f753c5e387c5a2f6920b6a01f5ca849b8",
+  "evaluatedAt": "2026-10-26T04:07:00.595748+00:00",
   "status": "fail",
   "checks": [
     {
@@ -64,7 +64,7 @@
     {
       "id": "toolchain_4",
       "status": "pass",
-      "detail": "npm test -- --ci --runInBand course-tests/public/week-08.test.ts\n> dmi-react-native-starter@1.0.0 test\n> jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/public/week-08.test.ts\n\n\nPASS course-tests/public/week-08.test.ts\n  ✓ CampusOps detects offline start versus remote reassignment without mutating either record (1 ms)\n  ✓ merges independent field changes and reports same-field conflict (1 ms)\n  ✓ reports multiple incompatible fields in stable alphabetical order\n  ✓ deduplicates a replayed operation by stable identity\n  ✓ preserves the remote reassignment and queued offline start for conflict review (1 ms)\n  ✓ does not retry after confirmation while the incident remains assigned to another technician\n  ✓ rebases the same local intent only after explicit confirmation and matching assignment\n  ✓ removes a local intent only after explicit discard confirmation\n  ✓ retains the conflict when the proposed retry is based on an older remote version (1 ms)\n\nTest Suites: 1 passed, 1 total\nTests:       9 passed, 9 total\nSnapshots:   0 total\nTime:        0.199 s, estimated 1 s\nRan all test suites matching /course-tests\\/public\\/week-08.test.ts/i."
+      "detail": "npm test -- --ci --runInBand course-tests/public/week-08.test.ts\n> dmi-react-native-starter@1.0.0 test\n> jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/public/week-08.test.ts\n\n\nPASS course-tests/public/week-08.test.ts\n  ✓ CampusOps detects offline start versus remote reassignment without mutating either record (1 ms)\n  ✓ merges independent field changes and reports same-field conflict (1 ms)\n  ✓ reports multiple incompatible fields in stable alphabetical order\n  ✓ deduplicates a replayed operation by stable identity\n  ✓ preserves the remote reassignment and queued offline start for conflict review (1 ms)\n  ✓ does not retry after confirmation while the incident remains assigned to another technician\n  ✓ rebases the same local intent only after explicit confirmation and matching assignment\n  ✓ removes a local intent only after explicit discard confirmation\n  ✓ retains the conflict when the proposed retry is based on an older remote version (1 ms)\n\nTest Suites: 1 passed, 1 total\nTests:       9 passed, 9 total\nSnapshots:   0 total\nTime:        0.206 s, estimated 1 s\nRan all test suites matching /course-tests\\/public\\/week-08.test.ts/i."
     }
   ]
 }

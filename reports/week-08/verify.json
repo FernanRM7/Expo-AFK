@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "week": 8,
   "mode": "verify",
-  "commitSha": "9820b00e8d557a59f2f46bcfa234840ba87564fe",
-  "evaluatedAt": "2026-10-26T04:02:22.632542+00:00",
+  "commitSha": "60d70d0f753c5e387c5a2f6920b6a01f5ca849b8",
+  "evaluatedAt": "2026-10-26T04:06:55.407780+00:00",
   "status": "pass",
   "checks": [
     {
@@ -49,7 +49,7 @@
     {
       "id": "toolchain_4",
       "status": "pass",
-      "detail": "npm run test:smoke\n> dmi-react-native-starter@1.0.0 test:smoke\n> jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/smoke.test.tsx\n\n\nPASS course-tests/smoke.test.tsx\n  ✓ renders the reproducible baseline and resolves backend state (80 ms)\n  ✓ login and logout controls reflect session transitions (21 ms)\n  ✓ a technician can open the offline work and conflict review entry point (4 ms)\n\nTest Suites: 1 passed, 1 total\nTests:       3 passed, 3 total\nSnapshots:   0 total\nTime:        0.439 s, estimated 1 s\nRan all test suites matching /course-tests\\/smoke.test.tsx/i."
+      "detail": "npm run test:smoke\n> dmi-react-native-starter@1.0.0 test:smoke\n> jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/smoke.test.tsx\n\n\nPASS course-tests/smoke.test.tsx\n  ✓ renders the reproducible baseline and resolves backend state (84 ms)\n  ✓ login and logout controls reflect session transitions (23 ms)\n  ✓ a technician can open the offline work and conflict review entry point (4 ms)\n\nTest Suites: 1 passed, 1 total\nTests:       3 passed, 3 total\nSnapshots:   0 total\nTime:        0.397 s, estimated 1 s\nRan all test suites matching /course-tests\\/smoke.test.tsx/i."
     },
     {
       "id": "toolchain_5",
