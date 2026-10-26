@@ -1,84 +1,158 @@
-import type { SQLiteBindParams } from 'expo-sqlite';
+import type { SQLiteDatabase } from 'expo-sqlite';
+import { DatabaseSync } from 'node:sqlite';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import type { PendingWorkEntry } from '../domain/pendingWorkQueue';
 import { SQLitePendingWorkQueue } from './sqlitePendingWorkQueue';
 
-function positionalStrings(params: SQLiteBindParams): string[] {
-  if (!Array.isArray(params)) throw new Error('Expected positional parameters.');
-  const values: string[] = [];
-  for (const value of params) {
-    if (typeof value !== 'string') throw new Error('Expected string parameters.');
-    values.push(value);
+class NodeSQLiteDatabase {
+  constructor(private readonly database: DatabaseSync) {}
+
+  async execAsync(source: string): Promise<void> {
+    this.database.exec(source);
   }
-  return values;
+
+  async withTransactionAsync(task: () => Promise<void>): Promise<void> {
+    this.database.exec('BEGIN');
+    try {
+      await task();
+      this.database.exec('COMMIT');
+    } catch (error) {
+      this.database.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
+  async runAsync(source: string, ...params: unknown[]): Promise<Readonly<{ changes: number; lastInsertRowId: number }>> {
+    const result = this.database.prepare(source).run(...params as never[]);
+    return { changes: Number(result.changes), lastInsertRowId: Number(result.lastInsertRowid) };
+  }
+
+  async getFirstAsync<T>(source: string, ...params: unknown[]): Promise<T | null> {
+    return (this.database.prepare(source).get(...params as never[]) as T | undefined) ?? null;
+  }
+
+  async getAllAsync<T>(source: string, ...params: unknown[]): Promise<T[]> {
+    return this.database.prepare(source).all(...params as never[]) as T[];
+  }
 }
 
-test('persists a pending operation across queue instances and updates it only by stable identity', async () => {
-  const rows: { operation_id: string; incident_id: string; state: string; entry_json: string }[] = [];
-  const database = {
-    async execAsync() {},
-    async runAsync(source: string, params: SQLiteBindParams) {
-      const values = positionalStrings(params);
-      if (source.includes('INSERT INTO')) {
-        const [operationId, incidentId, state, serialized] = values;
-        if (!operationId || !incidentId || !state || !serialized) throw new Error('Missing insert parameters.');
-        if (!rows.some((row) => row.operation_id === operationId)) {
-          rows.push({ operation_id: operationId, incident_id: incidentId, state, entry_json: serialized });
-        }
-      } else if (source.includes('UPDATE')) {
-        const [state, serialized, operationId] = values;
-        if (!state || !serialized || !operationId) throw new Error('Missing update parameters.');
-        const row = rows.find((item) => item.operation_id === operationId);
-        if (row) {
-          row.state = state;
-          row.entry_json = serialized;
-        }
-      } else if (source.includes('DELETE')) {
-        const [operationId] = values;
-        if (!operationId) throw new Error('Missing delete parameter.');
-        const index = rows.findIndex((item) => item.operation_id === operationId);
-        if (index >= 0) rows.splice(index, 1);
-      }
-      return { changes: 1, lastInsertRowId: rows.length };
-    },
-    async getAllAsync<T>(_source: string, _params: SQLiteBindParams) {
-      return rows.map((row) => ({ operation_id: row.operation_id, entry_json: row.entry_json })) as T[];
-    },
-  };
-  const entry: PendingWorkEntry = {
-    operation: {
-      operationId: 'offline-start-persisted',
-      incidentId: 'campus-inc-001',
-      baseVersion: 8,
-      actorId: 'technician-1',
-      action: 'start',
-      payload: { startedAt: '2026-10-23T18:00:00.000Z' },
-    },
-    baseSnapshot: {
-      id: 'campus-inc-001',
-      version: 8,
-      status: 'assigned',
-      incident: {
-        id: 'campus-inc-001',
-        description: 'Prueba',
-        category: 'connectivity',
-        status: 'assigned',
-        location: { source: 'manual', label: 'Edificio de prueba' },
-        reporterId: 'reporter-1',
-        assignedTechnicianId: 'technician-1',
-      },
-    },
-    state: 'pending',
-  };
+function openQueue(database: DatabaseSync, beforeVersionChange?: (from: number, to: number) => void): SQLitePendingWorkQueue {
+  return new SQLitePendingWorkQueue(
+    new NodeSQLiteDatabase(database) as unknown as SQLiteDatabase,
+    beforeVersionChange,
+  );
+}
 
-  const firstInstance = new SQLitePendingWorkQueue(database);
-  await firstInstance.enqueue(entry);
-  const secondInstance = new SQLitePendingWorkQueue(database);
-  await expect(secondInstance.list()).resolves.toEqual([entry]);
-  await secondInstance.update({ ...entry, state: 'needs-review', conflictMessage: 'Revisión requerida.' });
-  await expect(firstInstance.list()).resolves.toEqual([
+const entry: PendingWorkEntry = {
+  operation: {
+    operationId: 'offline-start-persisted',
+    incidentId: 'campus-inc-001',
+    baseVersion: 8,
+    actorId: 'technician-1',
+    action: 'start',
+    payload: {
+      startedAt: '2026-10-23T18:00:00.000Z',
+      note: 'Revisar tablero al llegar.',
+      photoReferences: ['file:///app/cache/panel.jpg'],
+    },
+  },
+  baseSnapshot: {
+    id: 'campus-inc-001',
+    version: 8,
+    status: 'assigned',
+    incident: {
+      id: 'campus-inc-001',
+      description: 'Prueba',
+      category: 'connectivity',
+      status: 'assigned',
+      location: { source: 'manual', label: 'Edificio de prueba' },
+      reporterId: 'reporter-1',
+      assignedTechnicianId: 'technician-1',
+    },
+  },
+  state: 'pending',
+};
+
+test('rolls back a failed outbox migration without losing legacy queued work, then recovers', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'campusops-queue-migration-'));
+  const path = join(directory, 'campusops.db');
+  const database = new DatabaseSync(path);
+  database.exec(`
+    CREATE TABLE pending_work_operations (
+      operation_id TEXT PRIMARY KEY NOT NULL,
+      incident_id TEXT NOT NULL,
+      state TEXT NOT NULL CHECK (state IN ('pending', 'needs-review')),
+      entry_json TEXT NOT NULL
+    );
+  `);
+  database.prepare(
+    'INSERT INTO pending_work_operations(operation_id, incident_id, state, entry_json) VALUES (?, ?, ?, ?)',
+  ).run(entry.operation.operationId, entry.operation.incidentId, entry.state, JSON.stringify(entry));
+  const failingQueue = openQueue(database, () => {
+    throw new Error('injected queue migration failure');
+  });
+
+  await expect(failingQueue.list()).rejects.toThrow('injected queue migration failure');
+  expect(database.prepare('PRAGMA user_version').get()).toEqual({ user_version: 0 });
+  expect(database.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='pending_operations'",
+  ).get()).toBeUndefined();
+  expect(database.prepare('SELECT COUNT(*) AS count FROM pending_work_operations').get()).toEqual({ count: 1 });
+
+  await expect(openQueue(database).list()).resolves.toEqual([entry]);
+  expect(database.prepare('PRAGMA user_version').get()).toEqual({ user_version: 2 });
+  database.close();
+  rmSync(directory, { recursive: true, force: true });
+});
+
+test('migrates queued entries from the pre-versioned offline table without losing them', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'campusops-queue-legacy-'));
+  const path = join(directory, 'campusops-offline.db');
+  const database = new DatabaseSync(path);
+  database.exec(`
+    CREATE TABLE pending_work_operations (
+      operation_id TEXT PRIMARY KEY NOT NULL,
+      incident_id TEXT NOT NULL,
+      state TEXT NOT NULL CHECK (state IN ('pending', 'needs-review')),
+      entry_json TEXT NOT NULL
+    );
+  `);
+  database.prepare(
+    'INSERT INTO pending_work_operations(operation_id, incident_id, state, entry_json) VALUES (?, ?, ?, ?)',
+  ).run(entry.operation.operationId, entry.operation.incidentId, entry.state, JSON.stringify(entry));
+
+  await expect(openQueue(database).list()).resolves.toEqual([entry]);
+  expect(database.prepare('PRAGMA user_version').get()).toEqual({ user_version: 2 });
+  expect(database.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='pending_work_operations'",
+  ).get()).toBeUndefined();
+  database.close();
+  rmSync(directory, { recursive: true, force: true });
+});
+
+test('persists the first operation identity and recovers its note and photo references after restart', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'campusops-queue-restart-'));
+  const path = join(directory, 'campusops.db');
+  const firstDatabase = new DatabaseSync(path);
+  const firstQueue = openQueue(firstDatabase);
+  await firstQueue.enqueue(entry);
+  await firstQueue.enqueue({
+    ...entry,
+    operation: { ...entry.operation, payload: { note: 'must not replace original' } },
+  });
+  await firstQueue.update({ ...entry, state: 'needs-review', conflictMessage: 'Revisión requerida.' });
+  firstDatabase.close();
+
+  const reopenedDatabase = new DatabaseSync(path);
+  const reopenedQueue = openQueue(reopenedDatabase);
+  await expect(reopenedQueue.list()).resolves.toEqual([
     { ...entry, state: 'needs-review', conflictMessage: 'Revisión requerida.' },
   ]);
-  await firstInstance.remove(entry.operation.operationId);
-  await expect(secondInstance.list()).resolves.toEqual([]);
+  await reopenedQueue.remove(entry.operation.operationId);
+  await expect(reopenedQueue.list()).resolves.toEqual([]);
+  reopenedDatabase.close();
+  rmSync(directory, { recursive: true, force: true });
 });

@@ -46,8 +46,9 @@ function memoryQueue(): PendingWorkQueue & { entries: PendingWorkEntry[] } {
       entries[index] = entry;
     },
     async remove(operationId) {
-      const index = entries.findIndex((entry) => entry.operation.operationId === operationId);
-      if (index >= 0) entries.splice(index, 1);
+      for (let index = entries.length - 1; index >= 0; index -= 1) {
+        if (entries[index]?.operation.operationId === operationId) entries.splice(index, 1);
+      }
     },
   };
 }
@@ -185,6 +186,83 @@ test('does not clear a pending operation when the server does not confirm it', a
   expect(result[0]?.status).toBe('pending');
   expect(queue.entries).toHaveLength(1);
   expect(queue.entries[0]?.state).toBe('pending');
+});
+
+test('deduplicates repeated persisted identities before submitting them to the server', async () => {
+  const queue = memoryQueue();
+  let effectCount = 0;
+  const gateway: OfflineWorkGateway = {
+    async getById() {
+      return { ok: true, value: baseSnapshot };
+    },
+    async actOnIncident(snapshot) {
+      effectCount += 1;
+      return { ok: true, value: { ...snapshot, status: 'in_progress' } };
+    },
+  };
+  const service = createOfflineWorkSyncService({
+    actorId: 'technician-1',
+    queue,
+    gateway,
+    createOperationId: () => 'offline-start-deduplicated',
+  });
+
+  await service.queueStart(baseSnapshot);
+  queue.entries.push({ ...queue.entries[0]! });
+  await expect(service.listPending()).resolves.toHaveLength(1);
+  const result = await service.synchronize();
+
+  expect(result).toHaveLength(1);
+  expect(effectCount).toBe(1);
+  expect(queue.entries).toHaveLength(0);
+});
+
+test('replays an operation after a lost response with the same identity and one server effect', async () => {
+  const queue = memoryQueue();
+  const effectsByOperation = new Map<string, IncidentSnapshot>();
+  const submittedIds: string[] = [];
+  let dropFirstResponse = true;
+  const gateway: OfflineWorkGateway = {
+    async getById() {
+      return { ok: true, value: baseSnapshot };
+    },
+    async actOnIncident(snapshot, _action, _details, operationId) {
+      submittedIds.push(operationId);
+      let confirmed = effectsByOperation.get(operationId);
+      if (!confirmed) {
+        confirmed = { ...snapshot, status: 'in_progress' };
+        effectsByOperation.set(operationId, confirmed);
+      }
+      if (dropFirstResponse) {
+        dropFirstResponse = false;
+        return { ok: false, reason: { kind: 'timeout' } };
+      }
+      return { ok: true, value: confirmed };
+    },
+  };
+  const service = createOfflineWorkSyncService({
+    actorId: 'technician-1',
+    queue,
+    gateway,
+    createOperationId: () => 'offline-start-replay-001',
+  });
+
+  await service.queueStart(baseSnapshot);
+  await expect(service.synchronize()).resolves.toEqual([{
+    operationId: 'offline-start-replay-001',
+    status: 'pending',
+    message: 'El servidor no confirmó el inicio; la operación permanece en la cola.',
+  }]);
+  expect(queue.entries).toHaveLength(1);
+
+  await expect(service.synchronize()).resolves.toEqual([{
+    operationId: 'offline-start-replay-001',
+    status: 'synced',
+    message: 'El servidor confirmó el inicio de atención.',
+  }]);
+  expect(submittedIds).toEqual(['offline-start-replay-001', 'offline-start-replay-001']);
+  expect(effectsByOperation.size).toBe(1);
+  expect(queue.entries).toHaveLength(0);
 });
 
 test('does not expose or resolve another technician’s pending operation', async () => {

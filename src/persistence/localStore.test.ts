@@ -20,7 +20,7 @@ function database(version = 0) {
     getFirstAsync: async (sql: string) =>
       sql.includes("user_version") ? { user_version: currentVersion } : null,
     execAsync: async (sql: string) => {
-      for (const match of sql.matchAll(/CREATE TABLE (\w+)/g))
+      for (const match of sql.matchAll(/CREATE TABLE(?: IF NOT EXISTS)? (\w+)/g))
         tables.add(match[1]!);
       const next = sql.match(/PRAGMA user_version = (\d+)/);
       if (next) currentVersion = Number(next[1]);

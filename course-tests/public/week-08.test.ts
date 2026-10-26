@@ -32,6 +32,17 @@ test('merges independent field changes and reports same-field conflict', () => {
   ).toEqual({ kind: 'conflict', fields: ['title'] });
 });
 
+test('reports multiple incompatible fields in stable alphabetical order', () => {
+  const base = { id: 'r2', version: 1, fields: { zebra: 'base', alpha: 'base' } };
+  const local = { ...base, fields: { zebra: 'local', alpha: 'local' } };
+  const remote = { ...base, version: 2, fields: { zebra: 'remote', alpha: 'remote' } };
+
+  expect(resolveSync(base, local, remote)).toEqual({
+    kind: 'conflict',
+    fields: ['alpha', 'zebra'],
+  });
+});
+
 test('deduplicates a replayed operation by stable identity', () => {
   const operations = [{ operationId: 'op-1', value: 1 }, { operationId: 'op-1', value: 1 }, { operationId: 'op-2', value: 2 }];
   expect(deduplicateOperations(operations)).toEqual([operations[0], operations[2]]);

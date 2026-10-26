@@ -236,7 +236,7 @@ export function resolveSync(
   }
 
   return conflicts.length > 0
-    ? { kind: 'conflict', fields: conflicts }
+    ? { kind: 'conflict', fields: conflicts.sort() }
     : { kind: 'merged', fields: merged };
 }
 

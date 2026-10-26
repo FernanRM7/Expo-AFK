@@ -1,17 +1,13 @@
 import type { SQLiteDatabase } from "expo-sqlite";
-import type { PendingIncidentOperation } from "../campusops/contracts";
 import type { IncidentSnapshot } from "../features/incidents/domain/incidentRepository";
+import type { PendingWorkEntry, PendingWorkQueue } from "../features/incidents/domain/pendingWorkQueue";
 
 export const CURRENT_SCHEMA_VERSION = 2;
 
-export type PendingOperation = PendingIncidentOperation &
-  Readonly<{
-    note?: string;
-    photoReferences?: readonly string[];
-  }>;
+export type PendingOperation = PendingWorkEntry;
 
 /** SQLite adapter for offline incident snapshots and their durable outbox. */
-export class LocalStore {
+export class LocalStore implements PendingWorkQueue {
   constructor(private readonly db: SQLiteDatabase) {}
 
   async migrate(
@@ -37,7 +33,7 @@ export class LocalStore {
       }
       if (version < 2) {
         await this.db.execAsync(`
-          CREATE TABLE pending_operations (
+          CREATE TABLE IF NOT EXISTS pending_operations (
             operation_id TEXT PRIMARY KEY NOT NULL,
             incident_id TEXT NOT NULL,
             base_version INTEGER NOT NULL,
@@ -45,8 +41,39 @@ export class LocalStore {
             operation_json TEXT NOT NULL
           );
           CREATE INDEX pending_operations_incident ON pending_operations(incident_id);
-          PRAGMA user_version = 2;
         `);
+        const legacyQueue = await this.db.getFirstAsync<{ name: string }>(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='pending_work_operations'",
+        );
+        if (legacyQueue) {
+          const legacyRows = await this.db.getAllAsync<{
+            operation_id: string;
+            incident_id: string;
+            entry_json: string;
+          }>(
+            'SELECT operation_id, incident_id, entry_json FROM pending_work_operations ORDER BY rowid',
+          );
+          for (const legacyRow of legacyRows) {
+            const entry = parsePendingOperation(legacyRow.entry_json);
+            if (
+              entry.operation.operationId !== legacyRow.operation_id ||
+              entry.operation.incidentId !== legacyRow.incident_id
+            ) {
+              throw new Error('A legacy pending operation does not match its stored identity.');
+            }
+            await this.db.runAsync(
+              `INSERT INTO pending_operations(operation_id, incident_id, base_version, actor_id, operation_json)
+               VALUES (?, ?, ?, ?, ?) ON CONFLICT(operation_id) DO NOTHING`,
+              legacyRow.operation_id,
+              legacyRow.incident_id,
+              entry.operation.baseVersion,
+              entry.operation.actorId,
+              legacyRow.entry_json,
+            );
+          }
+          await this.db.execAsync('DROP TABLE pending_work_operations;');
+        }
+        await this.db.execAsync('PRAGMA user_version = 2;');
       }
       beforeVersionChange?.(version, CURRENT_SCHEMA_VERSION);
     });
@@ -80,15 +107,15 @@ export class LocalStore {
     );
   }
 
-  async enqueue(operation: PendingOperation): Promise<void> {
+  async enqueue(entry: PendingOperation): Promise<void> {
     await this.db.runAsync(
       `INSERT INTO pending_operations(operation_id, incident_id, base_version, actor_id, operation_json)
        VALUES (?, ?, ?, ?, ?) ON CONFLICT(operation_id) DO NOTHING`,
-      operation.operationId,
-      operation.incidentId,
-      operation.baseVersion,
-      operation.actorId,
-      JSON.stringify(operation),
+      entry.operation.operationId,
+      entry.operation.incidentId,
+      entry.operation.baseVersion,
+      entry.operation.actorId,
+      JSON.stringify(entry),
     );
   }
 
@@ -96,8 +123,26 @@ export class LocalStore {
     const rows = await this.db.getAllAsync<{ operation_json: string }>(
       "SELECT operation_json FROM pending_operations ORDER BY rowid",
     );
-    return rows.map(
-      ({ operation_json }) => JSON.parse(operation_json) as PendingOperation,
+    return rows.map(({ operation_json }) => parsePendingOperation(operation_json));
+  }
+
+  async list(): Promise<readonly PendingOperation[]> {
+    return this.pendingOperations();
+  }
+
+  async update(entry: PendingOperation): Promise<void> {
+    const result = await this.db.runAsync(
+      "UPDATE pending_operations SET operation_json = ? WHERE operation_id = ?",
+      JSON.stringify(entry),
+      entry.operation.operationId,
+    );
+    if (result.changes !== 1) throw new Error("Pending work operation was not found.");
+  }
+
+  async remove(operationId: string): Promise<void> {
+    await this.db.runAsync(
+      "DELETE FROM pending_operations WHERE operation_id = ?",
+      operationId,
     );
   }
 
@@ -111,6 +156,31 @@ export class LocalStore {
       }
     });
   }
+}
+
+function parsePendingOperation(serialized: string): PendingOperation {
+  let value: unknown;
+  try {
+    value = JSON.parse(serialized);
+  } catch {
+    throw new Error("A pending work operation is invalid JSON.");
+  }
+  if (
+    typeof value !== "object" || value === null ||
+    !("operation" in value) || typeof value.operation !== "object" || value.operation === null ||
+    !("operationId" in value.operation) || typeof value.operation.operationId !== "string" ||
+    !("incidentId" in value.operation) || typeof value.operation.incidentId !== "string" ||
+    !("actorId" in value.operation) || typeof value.operation.actorId !== "string" ||
+    !("baseVersion" in value.operation) || typeof value.operation.baseVersion !== "number" ||
+    !("action" in value.operation) || typeof value.operation.action !== "string" ||
+    !("payload" in value.operation) || typeof value.operation.payload !== "object" ||
+    value.operation.payload === null || Array.isArray(value.operation.payload) ||
+    !("baseSnapshot" in value) || typeof value.baseSnapshot !== "object" || value.baseSnapshot === null ||
+    !("state" in value) || (value.state !== "pending" && value.state !== "needs-review")
+  ) {
+    throw new Error("A pending work operation does not match the stored contract.");
+  }
+  return value as PendingOperation;
 }
 
 export async function openLocalStore(

@@ -1,6 +1,6 @@
 import type { PendingIncidentOperation } from '../../../campusops/contracts';
+import { deduplicateOperations, reconcileSync } from '../../../course-evaluation';
 import type { FetchResult } from '../../../course-evaluation/contracts';
-import { reconcileSync } from '../../../course-evaluation';
 import type { IncidentSnapshot } from '../domain/incidentRepository';
 import type { PendingWorkEntry, PendingWorkQueue } from '../domain/pendingWorkQueue';
 
@@ -35,6 +35,13 @@ type Dependencies = Readonly<{
   now?: () => Date;
   createOperationId?: () => string;
 }>;
+
+function deduplicateEntries(entries: readonly PendingWorkEntry[]): readonly PendingWorkEntry[] {
+  return deduplicateOperations(entries.map((entry) => ({
+    operationId: entry.operation.operationId,
+    entry,
+  }))).map(({ entry }) => entry);
+}
 
 function makeOperationId(): string {
   return `offline-start-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -196,13 +203,14 @@ export function createOfflineWorkSyncService(
     },
 
     async listPending() {
-      return (await getQueue()).list().then((entries) =>
-        entries.filter((entry) => entry.operation.actorId === dependencies.actorId),
+      const entries = await (await getQueue()).list();
+      return deduplicateEntries(entries).filter(
+        (entry) => entry.operation.actorId === dependencies.actorId,
       );
     },
 
     async synchronize() {
-      const entries = (await (await getQueue()).list()).filter(
+      const entries = deduplicateEntries(await (await getQueue()).list()).filter(
         (entry) => entry.operation.actorId === dependencies.actorId,
       );
       const results: OfflineWorkSyncResult[] = [];
