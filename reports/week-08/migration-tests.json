@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "week": 8,
+  "commitSha": "8492490bcd77f6a1428b9c5fb08a67ce516b4918",
+  "generatedAt": "2026-10-26T15:41:38Z",
+  "checks": [
+    {
+      "id": "sqlite-migration-rollback-and-recovery",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand src/persistence/localStore.sqlite.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts",
+      "evidence": "Las suites usan archivos SQLite temporales. La falla inyectada dejó user_version=0, no creó pending_operations y conservó la fila de la cola legacy; el reintento migró la fila y terminó en versión 2."
+    },
+    {
+      "id": "restart-preserves-snapshot-notes-and-photo-references",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand src/persistence/localStore.sqlite.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts",
+      "evidence": "Cerrar y reabrir SQLite recuperó el snapshot, la operación original, la nota y la URI de la foto; enqueue con la misma identidad mantuvo la primera entrada."
+    },
+    {
+      "id": "offline-start-conflicts-with-remote-reassignment",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand src/features/incidents/application/offlineWorkSyncService.test.ts course-tests/public/week-08.test.ts",
+      "evidence": "La asignación remota al técnico 2 quedó intacta; el inicio del técnico 1 permaneció en la cola con versión base y estado needs-review."
+    },
+    {
+      "id": "retry-same-operation-identity-after-lost-response",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand src/features/incidents/application/offlineWorkSyncService.test.ts",
+      "evidence": "Después de simular timeout tras aplicar el efecto, el siguiente intento envió el mismo operationId; el servidor simulado registró un solo efecto y la cola sólo se retiró tras confirmación."
+    },
+    {
+      "id": "independent-fields-merge-and-conflict-fields-are-stable",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-08.test.ts",
+      "evidence": "Los cambios independientes se combinaron y los campos incompatibles se reportaron en orden alfabético; las entradas originales permanecieron disponibles para revisión."
+    },
+    {
+      "id": "week08-verification-and-feedback",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "make feedback && make verify-week-08",
+      "evidence": "TypeScript, ESLint, smoke tests, npm audit al umbral crítico, export Android y los diez checks de verificación de Semana 08 pasaron. npm audit reportó vulnerabilidades altas en dependencias de desarrollo/transitivas sin hallazgos críticos; backend:self-test pasó fuera del sandbox."
+    },
+    {
+      "id": "deduplication-preserves-frozen-inputs-and-pending-timeout",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand src/course-evaluation/syncDeduplication.test.ts src/features/incidents/application/offlineWorkSyncService.test.ts",
+      "evidence": "2 suites y 9 pruebas pasaron. El test de entradas congeladas confirma que deduplicateOperations mantiene identidad y orden sin mutar; timeout conserva la operación pendiente con el mismo ID."
+    }
+  ]
+}

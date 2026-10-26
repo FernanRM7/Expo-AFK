@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "week": 8,
+  "teamId": "9B-E11",
+  "members": [
+    {
+      "studentId": "3523110409",
+      "commitShas": [
+        "573800286134cd469c375e2edcad989c8ea9f172"
+      ],
+      "files": [
+        "src/features/incidents/application/offlineWorkSyncService.ts",
+        "src/features/incidents/application/offlineWorkSyncService.test.ts",
+        "src/features/incidents/domain/pendingWorkQueue.ts",
+        "src/features/incidents/infrastructure/sqlitePendingWorkQueue.ts",
+        "src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts",
+        "src/features/incidents/ui/OfflineWorkQueueScreen.tsx",
+        "src/features/incidents/ui/OfflineWorkQueueScreen.test.tsx",
+        "src/course-evaluation/index.ts",
+        "course-tests/public/week-08.test.ts",
+        "docs/sync-policy.md"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand src/features/incidents/application/offlineWorkSyncService.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts src/features/incidents/ui/OfflineWorkQueueScreen.test.tsx course-tests/public/week-08.test.ts course-tests/smoke.test.tsx src/persistence/localStore.test.ts — 6 suites y 28 pruebas pasaron en la revisión del HEAD 8492490."
+      ],
+      "reviews": [],
+      "prediction": "Esperaba que una reasignación remota conservara la autoridad del servidor, que la operación local siguiera en revisión y que la interfaz permitiera reintentar o descartar sólo tras una acción explícita.",
+      "command": "npm test -- --ci --runInBand src/features/incidents/application/offlineWorkSyncService.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts src/features/incidents/ui/OfflineWorkQueueScreen.test.tsx course-tests/public/week-08.test.ts course-tests/smoke.test.tsx src/persistence/localStore.test.ts",
+      "observedResult": "PASS: 6 suites y 28 pruebas; los casos cubren cola durable, conflicto de reasignación, revisión en UI y cambios independientes.",
+      "explanation": "En el commit 5738002 implementé el flujo de inicio offline y el manejo de conflicto de reasignación. La operación conserva identidad, autor y versión base; el conflicto muestra la asignación del servidor y conserva la intención local para que el técnico reintente o descarte explícitamente."
+    },
+    {
+      "studentId": "3523110016",
+      "commitShas": [
+        "8492490bcd77f6a1428b9c5fb08a67ce516b4918"
+      ],
+      "files": [
+        "src/course-evaluation/syncDeduplication.test.ts",
+        "src/features/incidents/application/offlineWorkSyncService.test.ts"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand src/course-evaluation/syncDeduplication.test.ts src/features/incidents/application/offlineWorkSyncService.test.ts — 2 suites y 9 pruebas pasaron en la revisión del HEAD 8492490."
+      ],
+      "reviews": [],
+      "prediction": "Esperaba que deduplicateOperations conservara la primera operación por ID sin mutar la entrada y que un timeout mantuviera la operación pendiente para poder reintentarla con la misma identidad.",
+      "command": "npm test -- --ci --runInBand src/course-evaluation/syncDeduplication.test.ts src/features/incidents/application/offlineWorkSyncService.test.ts",
+      "observedResult": "PASS: 2 suites y 9 pruebas; la prueba unitaria confirma identidad, orden y no mutación, y las pruebas del servicio confirman que timeout no elimina la operación de la cola.",
+      "explanation": "En el commit 8492490 añadí una prueba de deduplicación con entradas congeladas para detectar mutación y un caso de timeout que verifica que la operación conserve estado e identidad pendientes."
+    },
+    {
+      "studentId": "3523110657",
+      "commitShas": [
+        "491dfc21f3c3bd8bc1fb99bfa3afdd09c936ce80",
+        "c1ee76863ae95a4629e211baf052122a2291457d"
+      ],
+      "files": [
+        "src/persistence/localStore.ts",
+        "src/persistence/localStore.test.ts",
+        "src/persistence/localStore.sqlite.test.ts",
+        "src/features/incidents/infrastructure/sqlitePendingWorkQueue.ts",
+        "src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts",
+        "src/features/incidents/application/offlineWorkSyncService.ts",
+        "src/features/incidents/application/offlineWorkSyncService.test.ts",
+        "src/course-evaluation/index.ts",
+        "docs/data-model.md",
+        "docs/sync-policy.md"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand src/persistence/localStore.sqlite.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts — 2 suites y 6 pruebas pasaron en la revisión del HEAD 8492490.",
+        "npm test -- --ci --runInBand src/persistence/localStore.test.ts src/persistence/localStore.sqlite.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts src/features/incidents/application/offlineWorkSyncService.test.ts src/features/incidents/infrastructure/remoteIncidentRepository.test.ts src/course-evaluation/syncDeduplication.test.ts src/features/incidents/ui/OfflineWorkQueueScreen.test.tsx course-tests/public/week-08.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx — 10 suites y 44 pruebas pasaron."
+      ],
+      "reviews": [],
+      "prediction": "Esperaba que la cola y las notas/referencias de fotos sobrevivieran al reinicio, que una migración fallida hiciera rollback completo y que la sincronización mantuviera la asignación remota ante conflicto.",
+      "command": "npm test -- --ci --runInBand src/persistence/localStore.sqlite.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts",
+      "observedResult": "PASS: 2 suites y 6 pruebas sobre SQLite real en archivos temporales; se cubrieron rollback/reintento, upgrade legacy y recuperación tras cerrar y reabrir.",
+      "explanation": "En los commits 491dfc2 y c1ee768 implementé el almacenamiento SQLite versionado, el traslado transaccional de la cola legacy, y la integración de deduplicación/sincronización. Añadí pruebas de migración, reinicio, notas y referencias de fotos, y documenté el modelo y la política."
+    }
+  ]
+}

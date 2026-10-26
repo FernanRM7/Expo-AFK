@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "week": 8,
+  "commitSha": "8492490bcd77f6a1428b9c5fb08a67ce516b4918",
+  "decision": "La cola SQLite conserva cada operación completa y su snapshot base bajo una identidad estable. El servicio deduplica por operationId antes de sincronizar y el mismo identificador viaja como clave de idempotencia en cada reintento. La sincronización vuelve a leer el incidente remoto, combina cambios independientes y pone los conflictos en revisión sin aplicar una asignación vieja ni retirar la intención local. Las migraciones de snapshots y cola comparten transacciones por base; al abrir la cola se migra de forma atómica su tabla legacy.",
+  "alternatives": [
+    "Guardar sólo la acción y reconstruir el resto al sincronizar; reduce columnas y JSON local, pero una nota, URI de foto o snapshot base puede perderse al cerrar la app y no se puede explicar el conflicto original.",
+    "Reemplazar el estado remoto con el snapshot local al sincronizar; mantiene una lógica sencilla, pero puede restaurar una asignación obsoleta y sobrescribir cambios de coordinación.",
+    "Conservar el outbox versionado, reconciliar contra el servidor y pedir revisión cuando cambió el mismo campo; añade migraciones y estados de cola, mientras protege la autoridad remota y permite reintentos idempotentes."
+  ],
+  "tradeoff": "El outbox versionado y transaccional permite recuperación tras reinicio o fallo y conserva evidencia de la intención local. La reconciliación evita pérdida silenciosa de asignaciones; los conflictos requieren intervención. Deduplicar y reutilizar la clave reduce efectos duplicados, a costa de conservar IDs estables y comprobar la idempotencia en el servidor.",
+  "requirementIds": [
+    "AC-01",
+    "AC-02",
+    "AC-03",
+    "AC-04",
+    "AC-05"
+  ],
+  "verification": [
+    {
+      "command": "npm test -- --ci --runInBand src/persistence/localStore.test.ts src/persistence/localStore.sqlite.test.ts src/features/incidents/infrastructure/sqlitePendingWorkQueue.test.ts src/features/incidents/application/offlineWorkSyncService.test.ts src/features/incidents/infrastructure/remoteIncidentRepository.test.ts course-tests/public/week-08.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx",
+      "result": "pass",
+      "evidence": "Ocho suites y 40 pruebas pasaron, incluyendo SQLite de archivo, rollback/reintento, persistencia tras reinicio, conflicto de reasignación y repetición con un solo efecto."
+    },
+    {
+      "command": "make feedback",
+      "result": "pass",
+      "evidence": "Typecheck, lint, tres smoke tests, audit:ci y export Android terminaron con código 0; audit reportó seis vulnerabilidades altas y ninguna crítica bajo el umbral configurado."
+    },
+    {
+      "command": "make verify-week-08",
+      "result": "pass",
+      "evidence": "Los checks base, perfil RN, scripts, workflow, secretos, tipos, lint, audit, smoke y backend:self-test pasaron en el SHA de código registrado."
+    },
+    {
+      "command": "npm test -- --ci --runInBand src/features/session/application/sessionLifecycle.test.ts src/features/session/application/sessionService.test.ts src/features/session/infrastructure/secureSessionStorage.test.ts src/features/incidents/application/authorizeOperation.test.ts src/features/incidents/infrastructure/remoteIncidentRepository.test.ts src/api/cloudClient.test.ts course-tests/public/week-06.test.ts course-tests/smoke.test.tsx",
+      "result": "pass",
+      "evidence": "Las ocho suites de regresión de Semana 06 pasaron con 41 pruebas para actualizar los SHA de evidencia que Actions valida."
+    },
+    {
+      "command": "make public-test-week-08",
+      "result": "pass",
+      "evidence": "El evaluador público pasó en el HEAD 8492490 con el individual.json de los tres integrantes; validó migración, evidencia de ingeniería e individual, tipos, lint, audit, y las pruebas públicas Week 08."
+    },
+    {
+      "command": "make verify-week-08",
+      "result": "pass",
+      "evidence": "En el SHA 9820b00e8d557a59f2f46bcfa234840ba87564fe, después de apuntar el checkout del workflow al SHA del PR, los checks de integridad del workflow, archivos, secretos, tipos, lint, audit, smoke y backend:self-test pasaron."
+    },
+    {
+      "command": "Week 08 workflow checkout with fetch-depth: 0",
+      "result": "pass",
+      "evidence": "El workflow evalúa el SHA de cabeza del PR y tiene disponible el commit padre para verificar que los cambios entre reporte y checkout sean sólo reports/ y evidence/."
+    },
+    {
+      "command": "npm test -- --ci --runInBand src/course-evaluation/syncDeduplication.test.ts src/features/incidents/application/offlineWorkSyncService.test.ts",
+      "result": "pass",
+      "evidence": "Las 2 suites y 9 pruebas aportadas en el commit 8492490 pasaron: deduplicación sin mutación y conservación de la operación pendiente en timeout."
+    }
+  ],
+  "assistance": "Codex asistió en implementación, revisión y redacción de evidencias. El equipo verificó los cambios con pruebas Jest, SQLite real en archivos temporales, typecheck, ESLint, make feedback, los evaluadores públicos y los checks de Actions."
+}
