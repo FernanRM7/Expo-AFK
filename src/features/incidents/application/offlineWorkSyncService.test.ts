@@ -296,3 +296,30 @@ test('does not expose or resolve another technician’s pending operation', asyn
   expect(gateway.actOnIncident).not.toHaveBeenCalled();
   expect(queue.entries).toHaveLength(1);
 });
+
+test('mantiene pendiente la operación cuando el servidor agota el tiempo de espera', async () => {
+  const queue = memoryQueue();
+  const remote = { ...baseSnapshot, version: 2 };
+  const gateway: OfflineWorkGateway = {
+    async getById() {
+      return { ok: true, value: remote };
+    },
+    async actOnIncident() {
+      return { ok: false, reason: { kind: 'timeout' } };
+    },
+  };
+  const service = createOfflineWorkSyncService({
+    actorId: 'technician-1',
+    queue,
+    gateway,
+    createOperationId: () => 'offline-start-timeout-001',
+  });
+
+  await service.queueStart(baseSnapshot);
+  const result = await service.synchronize();
+
+  expect(result[0]?.status).toBe('pending');
+  expect(queue.entries).toHaveLength(1);
+  expect(queue.entries[0]?.state).toBe('pending');
+  expect(queue.entries[0]?.operation.operationId).toBe('offline-start-timeout-001');
+});
