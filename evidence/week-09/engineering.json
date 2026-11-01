@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 9,
-  "commitSha": "e5597a8cb4162cb4948778cc2ba820b12695d6eb",
+  "commitSha": "ef2c6861504f9d2dbe6471be7aa2eb12f9f132cb",
   "decision": "Reintentar timeout, HTTP 429 y HTTP 5xx hasta cuatro intentos dentro de 15 segundos. Esperar el Retry-After válido; si excede el límite de cinco segundos, detener los reintentos en lugar de consultar antes de tiempo. Si ubicación falla, conservar la etiqueta manual. Repetir un POST sólo con clave estable y el mismo cuerpo.",
   "alternatives": [
     "Usar una API de mapas externa en tiempo real, con dependencia de conexión, cuota y disponibilidad del proveedor.",
