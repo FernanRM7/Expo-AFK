@@ -7,6 +7,7 @@ import type {
   SyncRecord,
 } from './contracts';
 import type { IncidentLocation, PendingIncidentOperation } from '../campusops/contracts';
+import { selectIncidentLocation as selectIncidentLocationReal } from '../features/location/domain/selectIncidentLocation';
 
 function pending(name: string): never {
   throw new Error(`${name} must be implemented in the assigned week`);
@@ -401,6 +402,6 @@ export function reducePermissionLifecycle(
 }
 
 /** Week 09: see docs/CAMPUSOPS_API.md; this is not a completed solution. */
-export function selectIncidentLocation(_provider: unknown, _manualLabel: string): IncidentLocation {
-  return pending('selectIncidentLocation');
+export function selectIncidentLocation(provider: unknown, manualLabel: string): IncidentLocation {
+  return selectIncidentLocationReal(provider, manualLabel);
 }
