@@ -1,8 +1,11 @@
 import type { IncidentCategory, IncidentStatus } from '../../../campusops/contracts';
 import { parseRemoteResource } from '../../../course-evaluation';
 import type { FetchResult, ParseResult } from '../../../course-evaluation/contracts';
-import { fetchJson, fetchJsonWithSession } from '../../../api/cloudClient';
-import type { SessionRequestCoordinator } from '../../../api/cloudClient';
+import {
+    fetchJsonWithRetry,
+    type RetryExecutionOptions,
+    type SessionRequestCoordinator,
+} from '../../../api/cloudClient';
 import { authorizeOperation } from '../application/authorizeOperation';
 import type { OperacionIncidencia } from '../application/authorizeOperation';
 import { sessionService } from '../../session/application/sessionService';
@@ -32,6 +35,7 @@ export type RemoteIncidentRepositoryOptions = Readonly<{
     baseUrl?: string;
     timeoutMs?: number;
     fetchImpl?: typeof fetch;
+    retry?: RetryExecutionOptions;
 }>;
 
 type RemoteIncidentDto = Extract<ParseResult, { ok: true }>['value'];
@@ -111,6 +115,7 @@ export class RemoteIncidentRepository implements IncidentRepository {
     private readonly fetchImpl: typeof fetch;
     private readonly actorId: CourseActorId;
     private readonly session: SessionRequestCoordinator | undefined;
+    private readonly retry: RetryExecutionOptions | undefined;
 
     constructor(options: RemoteIncidentRepositoryOptions) {
         this.baseUrl = (options.baseUrl ?? process.env.EXPO_PUBLIC_COURSE_BACKEND_URL ?? DEFAULT_BASE_URL)
@@ -124,6 +129,7 @@ export class RemoteIncidentRepository implements IncidentRepository {
         this.fetchImpl = options.fetchImpl ?? fetch;
         this.actorId = options.actorId;
         this.session = options.session ?? (options.accessToken ? undefined : sessionService);
+        this.retry = options.retry;
     }
 
     async list(): Promise<FetchResult<readonly IncidentSnapshot[]>> {
@@ -208,9 +214,14 @@ export class RemoteIncidentRepository implements IncidentRepository {
         validate: (payload: unknown) => payload is T,
         request: RequestInit,
     ): Promise<FetchResult<T>> {
-        if (this.session) {
-            return fetchJsonWithSession(url, validate, this.timeoutMs, request, this.fetchImpl, this.session);
-        }
-        return fetchJson(url, validate, this.timeoutMs, request, this.fetchImpl);
+        return fetchJsonWithRetry(
+            url,
+            validate,
+            this.timeoutMs,
+            request,
+            this.fetchImpl,
+            this.session,
+            this.retry,
+        );
     }
 }

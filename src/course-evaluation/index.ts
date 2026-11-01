@@ -378,14 +378,61 @@ export function deduplicateOperations<T extends Readonly<{ operationId: string }
   });
 }
 
-export function planRetry(_input: Readonly<{
+export type RetryPolicy = Readonly<{
+  maxAttempts?: number;
+  maxElapsedMs?: number;
+  baseDelayMs?: number;
+  maxDelayMs?: number;
+}>;
+
+export function planRetry(input: Readonly<{
   method: 'GET' | 'POST';
   status: number | 'timeout';
   attempt: number;
   retryAfterMs?: number;
   idempotencyKey?: string;
-}>): Readonly<{ retry: boolean; delayMs: number; requiresStableIdempotencyKey: boolean }> {
-  return pending('planRetry');
+  elapsedMs?: number;
+}> & RetryPolicy): Readonly<{ retry: boolean; delayMs: number; requiresStableIdempotencyKey: boolean }> {
+  const maxAttempts = input.maxAttempts ?? 4;
+  const maxElapsedMs = input.maxElapsedMs ?? 15_000;
+  const baseDelayMs = input.baseDelayMs ?? 250;
+  const maxDelayMs = input.maxDelayMs ?? 5_000;
+  const elapsedMs = input.elapsedMs ?? 0;
+  const requiresStableIdempotencyKey = input.method === 'POST' &&
+    (typeof input.idempotencyKey !== 'string' || input.idempotencyKey.trim().length < 8);
+  const invalidPolicy =
+    !Number.isInteger(maxAttempts) || maxAttempts < 1 ||
+    !Number.isFinite(maxElapsedMs) || maxElapsedMs <= 0 ||
+    !Number.isFinite(baseDelayMs) || baseDelayMs < 0 ||
+    !Number.isFinite(maxDelayMs) || maxDelayMs < 0 ||
+    !Number.isFinite(elapsedMs) || elapsedMs < 0;
+  const retryableStatus = input.status === 'timeout' ||
+    (typeof input.status === 'number' &&
+      (input.status === 0 || input.status === 429 || (input.status >= 500 && input.status <= 599)));
+  if (
+    invalidPolicy ||
+    !Number.isInteger(input.attempt) ||
+    input.attempt < 1 ||
+    input.attempt >= Math.min(maxAttempts, 4) ||
+    elapsedMs >= maxElapsedMs ||
+    !retryableStatus ||
+    requiresStableIdempotencyKey
+  ) {
+    return { retry: false, delayMs: 0, requiresStableIdempotencyKey };
+  }
+
+  const backoffMs = Math.min(maxDelayMs, baseDelayMs * (2 ** (input.attempt - 1)));
+  const requestedDelayMs =
+    typeof input.retryAfterMs === 'number' &&
+    Number.isFinite(input.retryAfterMs) &&
+    input.retryAfterMs >= 0
+    ? Math.min(input.retryAfterMs, maxDelayMs)
+    : backoffMs;
+  const delayMs = Math.min(requestedDelayMs, maxDelayMs);
+  if (!Number.isFinite(delayMs) || elapsedMs + delayMs >= maxElapsedMs) {
+    return { retry: false, delayMs: 0, requiresStableIdempotencyKey };
+  }
+  return { retry: true, delayMs, requiresStableIdempotencyKey: false };
 }
 
 export function reduceRemoteResponses(_input: Readonly<{

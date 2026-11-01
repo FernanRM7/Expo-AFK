@@ -1,7 +1,12 @@
 import { createHttpLocationProvider } from './httpLocationProvider';
 
-function respuesta(estado: number, cuerpo: unknown): Response {
-    return { ok: estado >= 200 && estado < 300, status: estado, json: async () => cuerpo } as Response;
+function respuesta(estado: number, cuerpo: unknown, headers = new Headers()): Response {
+    return {
+        ok: estado >= 200 && estado < 300,
+        status: estado,
+        headers,
+        json: async () => cuerpo,
+    } as Response;
 }
 
 function crearProveedor(fetchSimulado: jest.Mock, tiempoLimiteMs = 50) {
@@ -9,6 +14,7 @@ function crearProveedor(fetchSimulado: jest.Mock, tiempoLimiteMs = 50) {
         baseUrl: 'http://127.0.0.1:4310',
         tiempoLimiteMs,
         fetchImpl: fetchSimulado as unknown as typeof fetch,
+        retry: { sleep: async () => undefined },
     });
 }
 
@@ -55,6 +61,26 @@ test('429: no disponible por límite de solicitudes', async () => {
     expect(await crearProveedor(fetchSimulado).resolve('zona')).toEqual({
         disponible: false, motivo: 'rate-limited',
     });
+    expect(fetchSimulado).toHaveBeenCalledTimes(4);
+});
+
+test('Retry-After se respeta antes de repetir geocodificación', async () => {
+    const sleep = jest.fn(async (_delayMs: number) => undefined);
+    const fetchSimulado = jest.fn()
+        .mockResolvedValueOnce(respuesta(429, { code: 'rate_limited' }, new Headers({ 'Retry-After': '2' })))
+        .mockResolvedValueOnce(respuesta(200, { label: 'Zona ficticia', latitude: 0, longitude: 0 }));
+    const provider = createHttpLocationProvider({
+        baseUrl: 'http://127.0.0.1:4310',
+        fetchImpl: fetchSimulado as typeof fetch,
+        retry: { sleep },
+    });
+
+    await expect(provider.resolve('zona')).resolves.toEqual({
+        disponible: true,
+        valor: { label: 'Zona ficticia', latitude: 0, longitude: 0 },
+    });
+    expect(sleep).toHaveBeenCalledWith(2000);
+    expect(fetchSimulado).toHaveBeenCalledTimes(2);
 });
 
 test('desconexión: no disponible por falta de conexión', async () => {

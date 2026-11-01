@@ -13,6 +13,7 @@ const SAFE_ERROR_CODES = new Set([
   'backend_http_error',
   'backend_contract_mismatch',
   'backend_request_failed',
+  'backend_retry_attempt',
 ]);
 
 /** Installs the app's telemetry transport. Call with null to disable it. */

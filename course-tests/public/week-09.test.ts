@@ -22,6 +22,30 @@ test('retries bounded idempotent failures and honors Retry-After', () => {
   expect(planRetry({ method: 'GET', status: 'timeout', attempt: 4 })).toMatchObject({ retry: false });
 });
 
+test('uses progressive finite backoff and applies attempt and elapsed-time limits', () => {
+  expect(planRetry({ method: 'GET', status: 503, attempt: 1 })).toEqual({
+    retry: true,
+    delayMs: 250,
+    requiresStableIdempotencyKey: false,
+  });
+  expect(planRetry({ method: 'GET', status: 503, attempt: 2 })).toMatchObject({
+    retry: true,
+    delayMs: 500,
+  });
+  expect(planRetry({ method: 'GET', status: 503, attempt: 3, maxDelayMs: 600 })).toMatchObject({
+    retry: true,
+    delayMs: 600,
+  });
+  expect(planRetry({ method: 'GET', status: 429, attempt: 1, retryAfterMs: 800, maxDelayMs: 400 }))
+    .toMatchObject({ retry: true, delayMs: 400 });
+  expect(planRetry({ method: 'GET', status: 503, attempt: 1, elapsedMs: 950, maxElapsedMs: 1000 }))
+    .toMatchObject({ retry: false, delayMs: 0 });
+  expect(planRetry({ method: 'GET', status: 503, attempt: 1, maxAttempts: 2 }))
+    .toMatchObject({ retry: true });
+  expect(planRetry({ method: 'GET', status: 503, attempt: 2, maxAttempts: 2 }))
+    .toMatchObject({ retry: false });
+});
+
 test('does not retry a POST without stable idempotency identity', () => {
   expect(planRetry({ method: 'POST', status: 503, attempt: 1 })).toEqual({
     retry: false,

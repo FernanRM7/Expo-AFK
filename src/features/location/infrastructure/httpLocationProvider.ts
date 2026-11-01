@@ -1,4 +1,4 @@
-import { fetchJson } from '../../../api/cloudClient';
+import { fetchJsonWithRetry, type RetryExecutionOptions } from '../../../api/cloudClient';
 import type { LocationProvider, ResultadoProveedor } from '../domain/locationProvider';
 
 const URL_BASE_POR_DEFECTO = 'http://127.0.0.1:4310';
@@ -8,6 +8,7 @@ export type OpcionesProveedorHttp = Readonly<{
     headers?: Readonly<Record<string, string>>;
     tiempoLimiteMs?: number;
     fetchImpl?: typeof fetch;
+    retry?: RetryExecutionOptions;
 }>;
 
 function esRegistro(valor: unknown): valor is Record<string, unknown> {
@@ -20,12 +21,14 @@ export function createHttpLocationProvider(opciones: OpcionesProveedorHttp = {})
 
     return {
         async resolve(consulta: string): Promise<ResultadoProveedor> {
-            const resultado = await fetchJson(
+            const resultado = await fetchJsonWithRetry(
                 `${baseUrl}/v1/geocoding?q=${encodeURIComponent(consulta)}`,
                 esRegistro,
                 opciones.tiempoLimiteMs,
                 { headers: { Accept: 'application/json', ...opciones.headers } },
                 opciones.fetchImpl,
+                undefined,
+                opciones.retry,
             );
             if (resultado.ok) return { disponible: true, valor: resultado.value };
 
