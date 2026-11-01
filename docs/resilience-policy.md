@@ -15,11 +15,11 @@
 | Infraestructura | `src/features/location/infrastructure/httpLocationProvider.ts` |
 | Aplicación | `src/features/location/application/resolveIncidentLocation.ts` |
 
-`selectIncidentLocation` en `src/course-evaluation/index.ts` solo le pasa la tarea a la lógica real del dominio.
+`selectIncidentLocation` en `src/course-evaluation/index.ts` pasa la tarea a la lógica real del dominio. `App.tsx` conecta el proveedor con sesión al formulario de reporte y reutiliza el resolutor durante la sesión.
 
-## Fallos del proveedor
+## Fallos y reintentos del proveedor
 
-El adaptador nunca lanza excepciones. Cada fallo lo convierte en "no disponible" con un motivo `timeout`, `rate-limited` (HTTP 429), `sin-conexion` o `respuesta-invalida`. Tampoco reintenta hace una sola consulta por búsqueda.
+El adaptador convierte los fallos en "no disponible" con el motivo `timeout`, `rate-limited` (HTTP 429), `sin-conexion` o `respuesta-invalida`. Para timeout, HTTP 429 y HTTP 5xx usa `fetchJsonWithRetry`: hasta cuatro intentos y un máximo acumulado de 15 segundos. Un `Retry-After` válido determina la espera. Si supera el límite configurado de cinco segundos, se detienen los reintentos en vez de volver a consultar antes de tiempo. Sin esa cabecera usa backoff de 250, 500 y 1,000 ms. Si se agotan los reintentos, la aplicación ofrece la ubicación manual. No reintenta errores de contrato ni otros errores HTTP.
 
 ## Alternativa manual
 
@@ -41,6 +41,6 @@ npx jest course-tests/public/week-09.test.ts -t "valid geocoding" --verbose
 
 Para probar contra el doble real: `make run-backend` y usar el proveedor HTTP con `X-Course-Scenario` en `success`, `incomplete`, `invalid_coordinates`, `rate_limited` o `slow`.
 
-## Alcance pendiente
+## Flujo de reporte
 
-Los reintentos acotados (`planRetry`) y la conexión del resolutor a una pantalla de captura de incidencias quedan fuera de este documento hasta que los implementemos.
+El formulario de reporte permite buscar una ubicación y escribir una etiqueta manual. Si el proveedor responde, muestra la etiqueta recibida. Ante fallo o datos inválidos, conserva la ubicación manual y no agrega coordenadas. La operación de creación mantiene su clave y contenido al reintentarse desde el mismo formulario.

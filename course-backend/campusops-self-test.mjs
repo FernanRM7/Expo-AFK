@@ -37,7 +37,7 @@ export async function testCampusOps(baseUrl) {
     headers: { Authorization: 'Bearer course-valid-token', 'X-Course-Actor': 'coordinator-1',
       'Content-Type': 'application/json', 'Idempotency-Key': 'close-lost-response', 'X-Course-Scenario': 'timeout_after_commit' },
     body: JSON.stringify(close),
-  }));
+  }), (error) => error?.name === 'TimeoutError');
   const replay = await action('coordinator-1', close, 'close-lost-response', 200);
   assert.equal(replay.duplicate, true);
   assert.equal(replay.incident.status, 'closed');

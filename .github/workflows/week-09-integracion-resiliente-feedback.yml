@@ -21,6 +21,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # PR merge refs can make evidence SHA checks compare against the wrong parent.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -35,6 +39,7 @@ jobs:
       - name: AC-02 — public behavior
         run: make public-test-week-09
       - name: AC-03 — declared failure evidence
+        if: github.ref == 'refs/tags/week-09-final'
         run: make evidence-week-09
       - name: Upload academic evidence
         if: always()

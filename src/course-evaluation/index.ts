@@ -422,12 +422,12 @@ export function planRetry(input: Readonly<{
   }
 
   const backoffMs = Math.min(maxDelayMs, baseDelayMs * (2 ** (input.attempt - 1)));
-  const requestedDelayMs =
-    typeof input.retryAfterMs === 'number' &&
-    Number.isFinite(input.retryAfterMs) &&
-    input.retryAfterMs >= 0
-    ? Math.min(input.retryAfterMs, maxDelayMs)
-    : backoffMs;
+  const hasRetryAfter = typeof input.retryAfterMs === 'number' &&
+    Number.isFinite(input.retryAfterMs) && input.retryAfterMs >= 0;
+  if (hasRetryAfter && input.retryAfterMs! > maxDelayMs) {
+    return { retry: false, delayMs: 0, requiresStableIdempotencyKey };
+  }
+  const requestedDelayMs = hasRetryAfter ? input.retryAfterMs! : backoffMs;
   const delayMs = Math.min(requestedDelayMs, maxDelayMs);
   if (!Number.isFinite(delayMs) || elapsedMs + delayMs >= maxElapsedMs) {
     return { retry: false, delayMs: 0, requiresStableIdempotencyKey };

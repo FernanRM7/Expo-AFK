@@ -37,7 +37,7 @@ test('uses progressive finite backoff and applies attempt and elapsed-time limit
     delayMs: 600,
   });
   expect(planRetry({ method: 'GET', status: 429, attempt: 1, retryAfterMs: 800, maxDelayMs: 400 }))
-    .toMatchObject({ retry: true, delayMs: 400 });
+    .toMatchObject({ retry: false, delayMs: 0 });
   expect(planRetry({ method: 'GET', status: 503, attempt: 1, elapsedMs: 950, maxElapsedMs: 1000 }))
     .toMatchObject({ retry: false, delayMs: 0 });
   expect(planRetry({ method: 'GET', status: 503, attempt: 1, maxAttempts: 2 }))

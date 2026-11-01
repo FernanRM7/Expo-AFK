@@ -3,8 +3,11 @@ import { Button, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { getBackendHealth } from './src/api/courseBackend';
+import { createLocationResolver } from './src/features/location/application/resolveIncidentLocation';
+import { createHttpLocationProvider } from './src/features/location/infrastructure/httpLocationProvider';
 import { createOfflineWorkSyncService } from './src/features/incidents/application/offlineWorkSyncService';
 import { RemoteIncidentRepository } from './src/features/incidents/infrastructure/remoteIncidentRepository';
+import { IncidentCreationScreen } from './src/features/incidents/ui/IncidentCreationScreen';
 import { getSQLitePendingWorkQueue } from './src/features/incidents/infrastructure/sqlitePendingWorkQueue';
 import { OfflineWorkQueueScreen } from './src/features/incidents/ui/OfflineWorkQueueScreen';
 import type { CourseActorId } from './src/features/incidents/infrastructure/remoteIncidentRepository';
@@ -21,6 +24,7 @@ export default function App() {
   const [sessionMessage, setSessionMessage] = useState('');
   const [actorId, setActorId] = useState<CourseActorId | null>(null);
   const [showOfflineWork, setShowOfflineWork] = useState(false);
+  const [showIncidentCreation, setShowIncidentCreation] = useState(false);
   const incidentRepository = useMemo(
     () => new RemoteIncidentRepository({ actorId: actorId ?? 'technician-1' }),
     [actorId],
@@ -33,6 +37,20 @@ export default function App() {
     }),
     [actorId, incidentRepository],
   );
+  const locationResolver = useMemo(() => createLocationResolver({
+    proveedor: {
+      async resolve(consulta) {
+        const access = await sessionService.getAccessToken();
+        if (!access.ok) return { disponible: false, motivo: 'respuesta-invalida' as const };
+        return createHttpLocationProvider({
+          headers: {
+            Authorization: `Bearer ${access.value}`,
+            'X-Course-Actor': actorId ?? 'reporter-1',
+          },
+        }).resolve(consulta);
+      },
+    },
+  }), [actorId]);
 
   useEffect(() => {
     let active = true;
@@ -81,6 +99,20 @@ export default function App() {
     );
   }
 
+  if (showIncidentCreation && actorId?.startsWith('reporter-')) {
+    return (
+      <View style={styles.screen}>
+        <IncidentCreationScreen
+          repository={incidentRepository}
+          locationResolver={locationResolver}
+          onCreated={() => setShowIncidentCreation(false)}
+          onBack={() => setShowIncidentCreation(false)}
+        />
+        <StatusBar style="auto" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.screen}>
       <View accessibilityRole="summary" style={styles.card}>
@@ -111,6 +143,9 @@ export default function App() {
         )}
         {sessionState === 'authenticated' && actorId?.startsWith('technician-') ? (
           <Button title="Trabajo sin conexión" onPress={() => setShowOfflineWork(true)} />
+        ) : null}
+        {sessionState === 'authenticated' && actorId?.startsWith('reporter-') ? (
+          <Button title="Reportar incidencia" onPress={() => setShowIncidentCreation(true)} />
         ) : null}
         {sessionMessage ? <Text testID="session-message">{sessionMessage}</Text> : null}
       </View>

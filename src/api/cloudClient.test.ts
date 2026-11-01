@@ -1,4 +1,5 @@
 import { fetchJson, fetchJsonWithRetry, parseRetryAfterMs } from './cloudClient';
+import { planRetry } from '../course-evaluation';
 import { configureTelemetrySink } from '../telemetry/safeTelemetry';
 
 type Incidente = Readonly<{ id: string; status: string }>;
@@ -173,4 +174,9 @@ test('Retry-After accepts seconds and HTTP dates without producing non-finite de
     expect(parseRetryAfterMs('-1', 0)).toBeUndefined();
     expect(parseRetryAfterMs('Infinity', 0)).toBeUndefined();
     expect(parseRetryAfterMs('9'.repeat(310), 0)).toBe(Number.MAX_VALUE);
+});
+
+test('does not retry before a Retry-After delay that exceeds the configured wait limit', () => {
+    expect(planRetry({ method: 'GET', status: 429, attempt: 1, retryAfterMs: 6000, maxDelayMs: 5000 }))
+        .toEqual({ retry: false, delayMs: 0, requiresStableIdempotencyKey: false });
 });
