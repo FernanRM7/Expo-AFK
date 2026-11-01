@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "week": 9,
+  "commitSha": "e5597a8cb4162cb4948778cc2ba820b12695d6eb",
+  "decision": "Reintentar timeout, HTTP 429 y HTTP 5xx hasta cuatro intentos dentro de 15 segundos. Esperar el Retry-After válido; si excede el límite de cinco segundos, detener los reintentos en lugar de consultar antes de tiempo. Si ubicación falla, conservar la etiqueta manual. Repetir un POST sólo con clave estable y el mismo cuerpo.",
+  "alternatives": [
+    "Usar una API de mapas externa en tiempo real, con dependencia de conexión, cuota y disponibilidad del proveedor.",
+    "Aceptar sólo texto manual y no consultar el doble de geocodificación, con disponibilidad alta pero sin coordenadas provistas por servicio.",
+    "Reintentar sin límite ante fallos temporales, con recuperación eventual a costa de solicitudes descontroladas y posibles efectos duplicados."
+  ],
+  "tradeoff": "El doble controlado, la caché y la ubicación manual mantienen el flujo reproducible sin exponerlo a cuotas externas. La política acotada reduce duplicados y carga, pero puede informar fallo cuando el proveedor sigue indisponible o pide esperar más que el máximo configurado.",
+  "requirementIds": [
+    "AC-01",
+    "AC-02",
+    "AC-03",
+    "AC-04",
+    "AC-05"
+  ],
+  "verification": [
+    {
+      "command": "make feedback",
+      "result": "pass",
+      "evidence": "TypeScript, ESLint, smoke tests, auditoría al umbral crítico y export Android de Expo finalizaron con éxito. El bundle Android se generó."
+    },
+    {
+      "command": "make verify-week-09",
+      "result": "pass",
+      "evidence": "Los controles de archivos base, perfil Expo, scripts, workflow, secretos, typecheck, lint, audit, smoke y backend:self-test pasaron en el commit 73309972cdce2fa699695fd3befd6e74f5e34ab5."
+    },
+    {
+      "command": "npm test -- --ci --runInBand --runTestsByPath src/features/incidents/ui/IncidentCreationScreen.test.tsx src/api/cloudClient.test.ts src/features/location/application/resolveIncidentLocation.test.ts src/features/location/infrastructure/httpLocationProvider.test.ts course-tests/public/week-09.test.ts course-tests/smoke.test.tsx",
+      "result": "pass",
+      "evidence": "Seis suites y 38 pruebas pasaron. Cubrieron creación desde la pantalla, ubicación manual, caché, timeout, 429, desconexión, Retry-After, backoff y reintentos con la misma clave y contenido."
+    },
+    {
+      "command": "npm run backend:self-test",
+      "result": "pass",
+      "evidence": "El backend controlado reprodujo la respuesta perdida después de guardar; el replay devolvió duplicate=true y dejó un solo evento close."
+    },
+    {
+      "command": "make public-test-week-09",
+      "result": "pass",
+      "evidence": "La verificación pública de comportamiento y el esquema de reportes/evidencias pasaron en el commit 73309972cdce2fa699695fd3befd6e74f5e34ab5."
+    },
+    {
+      "command": "make public-test-week-06 && make public-test-week-08",
+      "result": "pass",
+      "evidence": "Los reportes acumulativos se actualizaron al código actual y las verificaciones públicas de semanas 06 y 08 pasaron; los checks anteriores ya no rechazan el SHA histórico c475aab."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "week": 9,
+  "commitSha": "e5597a8cb4162cb4948778cc2ba820b12695d6eb",
+  "generatedAt": "2026-11-01T23:17:27Z",
+  "scenario": "synthetic timeout after server commit",
+  "checks": [
+    {
+      "id": "close-response-lost-after-commit",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm run backend:self-test",
+      "evidence": "El backend aplicó close con la clave close-lost-response. AbortSignal.timeout(250) produjo TimeoutError; el replay usó la misma clave y contenido y devolvió duplicate=true, status=closed y version=5. El historial conserva exactamente un evento close. El comando terminó con Controlled backend self-test passed."
+    },
+    {
+      "id": "provider-errors-preserve-manual-location",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand --runTestsByPath src/features/incidents/ui/IncidentCreationScreen.test.tsx src/api/cloudClient.test.ts src/features/location/application/resolveIncidentLocation.test.ts src/features/location/infrastructure/httpLocationProvider.test.ts course-tests/public/week-09.test.ts course-tests/smoke.test.tsx",
+      "evidence": "Seis suites y 38 pruebas pasaron. La cobertura incluyó timeout, 429, desconexión, respuesta incompleta o inválida, caché, fallback manual y el formulario conectado desde App."
+    },
+    {
+      "id": "lost-response-retry-keeps-operation-identity",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand --runTestsByPath src/api/cloudClient.test.ts",
+      "evidence": "La prueba de reintento de POST observó dos envíos con el mismo Idempotency-Key y cuerpo serializado; la telemetría no incluyó la clave ni el contenido."
+    }
+  ]
+}

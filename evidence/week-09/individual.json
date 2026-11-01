@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "week": 9,
+  "teamId": "9B-E11",
+  "members": [
+    {
+      "studentId": "3523110409",
+      "commitShas": [
+        "7bcdf414a873084e4452b6a12945e45d96b63347"
+      ],
+      "files": [
+        "src/features/location/application/resolveIncidentLocation.ts",
+        "src/features/location/application/resolveIncidentLocation.test.ts",
+        "src/features/location/infrastructure/httpLocationProvider.ts",
+        "src/features/location/infrastructure/httpLocationProvider.test.ts",
+        "src/features/location/domain/selectIncidentLocation.ts",
+        "docs/resilience-policy.md",
+        "src/features/incidents/ui/IncidentCreationScreen.tsx"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand --runTestsByPath src/features/incidents/ui/IncidentCreationScreen.test.tsx src/api/cloudClient.test.ts src/features/location/application/resolveIncidentLocation.test.ts src/features/location/infrastructure/httpLocationProvider.test.ts course-tests/public/week-09.test.ts course-tests/smoke.test.tsx: seis suites y 38 pruebas pasaron."
+      ],
+      "reviews": [],
+      "prediction": "El criterio comprobable del issue 59 era aceptar coordenadas válidas, usar etiqueta manual sin coordenadas ante fallos y reutilizar resultados válidos de caché.",
+      "command": "npm test -- --ci --runInBand --runTestsByPath src/features/incidents/ui/IncidentCreationScreen.test.tsx src/api/cloudClient.test.ts src/features/location/application/resolveIncidentLocation.test.ts src/features/location/infrastructure/httpLocationProvider.test.ts course-tests/public/week-09.test.ts course-tests/smoke.test.tsx",
+      "observedResult": "PASS: seis suites y 38 pruebas. La ejecución incluyó las pruebas de su contribución y el flujo de ubicación conectado a App.",
+      "explanation": "El commit 7bcdf414 agrega el puerto y adaptador HTTP de geocodificación, el resolutor con caché temporal y la selección manual ante fallos. El commit e5597a8 conecta esa lógica al formulario de reporte. La suite cubrió proveedor, caché, fallos y uso de ubicación manual desde el flujo."
+    },
+    {
+      "studentId": "3523110016",
+      "commitShas": [
+        "5559e3ee4fa60533f0f5e19a542958037d20cceb"
+      ],
+      "files": [
+        "src/api/cloudClient.ts",
+        "src/api/cloudClient.test.ts",
+        "src/course-evaluation/index.ts",
+        "src/features/incidents/infrastructure/remoteIncidentRepository.ts",
+        "course-tests/public/week-09.test.ts"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand --runTestsByPath src/features/incidents/ui/IncidentCreationScreen.test.tsx src/api/cloudClient.test.ts src/features/location/application/resolveIncidentLocation.test.ts src/features/location/infrastructure/httpLocationProvider.test.ts course-tests/public/week-09.test.ts course-tests/smoke.test.tsx: seis suites y 38 pruebas pasaron."
+      ],
+      "reviews": [],
+      "prediction": "El criterio comprobable del issue 60 era limitar intentos y demora, respetar Retry-After y repetir un POST únicamente con identidad y contenido estables.",
+      "command": "npm test -- --ci --runInBand --runTestsByPath src/features/incidents/ui/IncidentCreationScreen.test.tsx src/api/cloudClient.test.ts src/features/location/application/resolveIncidentLocation.test.ts src/features/location/infrastructure/httpLocationProvider.test.ts course-tests/public/week-09.test.ts course-tests/smoke.test.tsx",
+      "observedResult": "PASS: seis suites y 38 pruebas. La ejecución incluyó las pruebas de su contribución y el flujo de ubicación conectado a App.",
+      "explanation": "El commit 5559e3ee conecta planRetry a las solicitudes del repositorio, interpreta Retry-After y limita intentos y tiempo. Las pruebas agrupadas verifican esos límites y que un POST conserve clave y cuerpo al repetirse."
+    },
+    {
+      "studentId": "3523110657",
+      "commitShas": [
+        "1bf23d151ff88cb85e1ac9c521467848d89ff754",
+        "e5597a8cb4162cb4948778cc2ba820b12695d6eb"
+      ],
+      "files": [
+        ".github/workflows/week-09-integracion-resiliente-feedback.yml",
+        "App.tsx",
+        "course-backend/campusops-self-test.mjs",
+        "course-tests/public/week-09.test.ts",
+        "course-tests/smoke.test.tsx",
+        "docs/resilience-policy.md",
+        "src/course-evaluation/index.ts",
+        "src/api/cloudClient.test.ts",
+        "src/features/incidents/ui/IncidentCreationScreen.tsx",
+        "src/features/incidents/ui/IncidentCreationScreen.test.tsx"
+      ],
+      "tests": [
+        "make feedback: pasó typecheck, ESLint, smoke tests, audit al umbral crítico y export Android.",
+        "make verify-week-09: pasó con backend:self-test y controles del evaluador.",
+        "make public-test-week-09: pasó y validó reportes/evidencias para el SHA e5597a8."
+      ],
+      "reviews": [
+        "El workflow evalúa el SHA de cabeza del PR con historial completo y ejecuta la comprobación del tag sólo en el evento del tag final."
+      ],
+      "prediction": "El workflow debía evaluar el commit de cabeza del PR; las evidencias acumulativas debían apuntar al código verificado o a su padre directo cuando el commit final sólo cambiara reportes.",
+      "command": "make feedback && make verify-week-09 && make public-test-week-09",
+      "observedResult": "PASS: los tres comandos terminaron sin error. La prueba del backend confirmó TimeoutError después de guardar; el replay devolvió duplicate=true con un solo evento close.",
+      "explanation": "El commit e5597a8 corrige el orden del check de tag, evita reintentar antes de Retry-After, conecta la geocodificación y el fallback manual al formulario, y conserva clave y contenido al reintentar una creación. También actualicé las referencias SHA de Week 06 y Week 08 que el CI rechazaba como antiguas."
+    }
+  ],
+  "assistance": "Codex apoyó la integración, implementación de pruebas y preparación de reportes. El resultado se verificó con Jest, typecheck, ESLint, feedback y los evaluadores públicos antes de fijar el SHA."
+}
