@@ -45,7 +45,9 @@ La aplicación debe demostrar además recuperación de cola tras reiniciar y mig
 
 ### Semana 9 — resiliencia y ubicación manual
 
-`planRetry` conserva la firma y límites publicados: intentos acotados (no reintentar desde intento 4), respetar Retry-After válido, demoras finitas y POST sólo con identidad estable.
+`planRetry` limita por defecto cada solicitud a cuatro intentos totales (no programa otro envío desde el intento 4), con un máximo de 15 segundos transcurridos. Usa backoff exponencial desde 250 ms, acotado a 5 segundos; `Retry-After` válido en segundos o fecha HTTP prevalece antes de aplicar ese tope. Sólo se consideran timeout, 429, 5xx y error de red. Sus límites se pueden reducir por llamada (`maxAttempts`, `maxElapsedMs`, `baseDelayMs`, `maxDelayMs`), pero el límite de cuatro intentos no se puede ampliar. Todos los retardos calculados son finitos.
+
+El cliente conserva la misma solicitud y el mismo cuerpo serializado entre reintentos. Un POST sólo se reenvía si incluye una `Idempotency-Key` estable de al menos ocho caracteres; el backend rechaza reutilizarla con contenido distinto. La telemetría registra método, número de intento, estado, duración, decisión y demora, sin URL, clave, cuerpo ni datos de la incidencia. El backend controlado verifica el replay tras perder la respuesta y que no se repitan entradas de historial ni evidencias.
 
 `selectIncidentLocation(provider, manualLabel)` recibe un resultado externo desconocido y una etiqueta manual no vacía. Acepta únicamente objeto con `label` textual no vacío y coordenadas numéricas finitas dentro de latitud [-90,90] y longitud [-180,180]. Devuelve `{ source: 'provider', label, latitude, longitude }`. Ante null, error representado como dato, objeto incompleto, coordenadas inválidas o tipos incorrectos devuelve `{ source: 'manual', label: manualLabel }`, sin inventar coordenadas. Un timeout/429/desconexión se captura en el adaptador HTTP y se presenta como resultado no disponible.
 

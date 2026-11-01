@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "week": 9,
+  "commitSha": "e5597a8cb4162cb4948778cc2ba820b12695d6eb",
+  "generatedAt": "2026-11-01T23:17:27Z",
+  "policy": {
+    "maxAttempts": 4,
+    "maxElapsedMs": 15000,
+    "maxDelayMs": 5000,
+    "baseDelayMs": 250
+  },
+  "observedRetries": [
+    {
+      "attempt": 1,
+      "status": 429,
+      "delayMs": 1000,
+      "source": "Retry-After seconds"
+    },
+    {
+      "attempt": 1,
+      "status": 503,
+      "delayMs": 250,
+      "source": "progressive backoff"
+    },
+    {
+      "attempt": 2,
+      "status": 503,
+      "delayMs": 500,
+      "source": "progressive backoff"
+    },
+    {
+      "attempt": 3,
+      "status": 503,
+      "delayMs": 600,
+      "source": "configured maximum delay"
+    },
+    {
+      "attempt": 1,
+      "status": "timeout",
+      "delayMs": 250,
+      "source": "lost-response retry; stable POST identity"
+    }
+  ],
+  "checks": [
+    {
+      "id": "retry-after-and-finite-backoff",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand --runTestsByPath src/api/cloudClient.test.ts src/features/location/application/resolveIncidentLocation.test.ts src/features/location/infrastructure/httpLocationProvider.test.ts course-tests/public/week-09.test.ts",
+      "evidence": "Las cuatro suites y 32 pruebas pasaron. El doble observó espera de 1000 ms para Retry-After: 1 y 250 ms para el primer backoff; los casos adicionales comprobaron backoff progresivo y límite configurable."
+    },
+    {
+      "id": "attempt-and-elapsed-limits",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand --runTestsByPath course-tests/public/week-09.test.ts src/api/cloudClient.test.ts",
+      "evidence": "La prueba pública confirmó que no se reintenta desde intento 4, se detiene al llegar al máximo configurable y no programa una demora que exceda la ventana total. El test de límite rechazó Retry-After de 6000 ms cuando maxDelayMs es 5000, sin acortar la espera pedida por el servidor."
+    },
+    {
+      "id": "same-post-key-and-body",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand --runTestsByPath src/api/cloudClient.test.ts",
+      "evidence": "La prueba simuló pérdida de respuesta, dejó pasar 250 ms y confirmó que ambos envíos conservaron la misma clave y el mismo cuerpo; el caso sin clave hizo una sola llamada."
+    },
+    {
+      "id": "backend-replay-has-no-duplicate-effect",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm run backend:self-test",
+      "evidence": "Tras el TimeoutError a los 250 ms, el backend controlado respondió duplicate=true al replay y mantuvo una sola transición close en el historial."
+    }
+  ]
+}

@@ -68,3 +68,20 @@ test('a technician can open the offline work and conflict review entry point', a
   });
   expect(sessionService.login).toHaveBeenCalledWith('technician-1');
 });
+
+test('a reporter can open the incident form with provider and manual location fields', async () => {
+  jest.mocked(sessionService.login).mockImplementation(async () => {
+    transitionSessionLifecycle('login-started');
+    transitionSessionLifecycle('login-succeeded');
+    return { ok: true, value: { actorId: 'reporter-1', role: 'reporter', expiresIn: 60 } };
+  });
+  const view = await render(<App />);
+
+  await act(async () => fireEvent.press(view.getByTestId('login-button')));
+  await waitFor(() => expect(view.getByText('Reportar incidencia')).toBeTruthy());
+  await act(async () => fireEvent.press(view.getByText('Reportar incidencia')));
+
+  expect(view.getByText('Reportar incidencia')).toBeTruthy();
+  expect(view.getByPlaceholderText('Buscar edificio o zona')).toBeTruthy();
+  expect(view.getByPlaceholderText('Edificio, zona o referencia manual')).toBeTruthy();
+});
