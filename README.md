@@ -21,6 +21,19 @@ make setup
 make feedback
 ```
 
+## Entrenar un clasificador de tickets
+
+Instala las dependencias de Python y coloca `tickets.csv` en la raíz del
+repositorio. El CSV debe incluir las columnas `message` y `category`.
+
+```bash
+python -m pip install -r requirements-ml.txt
+python tools/train_ticket_classifier.py
+```
+
+El script separa los datos en entrenamiento y prueba de forma estratificada
+(80/20) y entrena una tubería TF-IDF con regresión logística.
+
 Para desarrollo local:
 
 ```bash
