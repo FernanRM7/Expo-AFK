@@ -21,7 +21,7 @@ make setup
 make feedback
 ```
 
-## Entrenar un clasificador de tickets
+## Código 1 · Separar y entrenar
 
 Instala las dependencias de Python y coloca `tickets.csv` en la raíz del
 repositorio. El CSV debe incluir las columnas `message` y `category`.
@@ -33,6 +33,12 @@ python tools/train_ticket_classifier.py
 
 El script separa los datos en entrenamiento y prueba de forma estratificada
 (80/20) y entrena una tubería TF-IDF con regresión logística.
+
+## Código 2 · Evaluar y predecir
+
+El mismo comando imprime el reporte de clasificación y la matriz de confusión
+para el conjunto de prueba. También clasifica un mensaje de ejemplo y muestra
+la probabilidad máxima como score aproximado, no como una confianza calibrada.
 
 Para desarrollo local:
 
